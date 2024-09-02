@@ -1,0 +1,40 @@
+hydra:
+  run:
+    dir: .
+  output_subdir: null 
+
+final_folder_name: 'minmax_by_obj_256'
+
+data_name: 'elasticc_1'
+subsets: ['test', 'train', 'val'] # 'train', 
+list_folds: [0] #, 2, 3, 4]
+num_cores: 30
+samples_per_shard: 10000
+
+norm_name: 'minmax_by_obj'
+use_err: false
+
+fig_params: {
+    use_err: true,
+    figsize: [2.56, 2.56],
+    fmt: '-o', #-o
+    markersize: 2.5,
+    linewidth: 1.2,
+    colors: {
+      0: '#00FF70',
+      1: '#70FF00',
+      2: '#FF0070',
+      3: '#FF7000',
+      4: '#0070FF',
+      5: '#7000FF'
+      }, # depende de la cantidad de bandas
+    alpha: 0.5,
+    ylim: [-0.05, 1.05],
+}
+
+extra_plasticc: {
+  'only_test': {
+    'use': True,
+    'path_partition': 'data/lightcurves/plasticc/partitions/test',
+  }
+}

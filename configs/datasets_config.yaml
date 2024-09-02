@@ -1,0 +1,134 @@
+
+plasticc:
+  path_data: 'data/lightcurves/plasticc/raw'
+  path_partition: 'data/lightcurves/plasticc/partitions'
+  dict_columns: {
+    snid: 'object_id',
+    mjd: 'mjd',
+    flux: 'flux',
+    flux_err: 'flux_err',
+    photflag: 'detected',
+    band: 'passband',
+    label: 'target'
+  }
+  all_bands: {
+    0: 'u', 
+    1: 'g', 
+    2: 'r', 
+    3: 'i', 
+    4: 'z', 
+    5: 'Y'
+    }
+  dict_mapping_real_classes: {
+    6: 'Single u-lens',
+    15: 'TDE',
+    16: 'Eclip. Binary',
+    42: 'SNII',
+    52: 'SNIax',
+    53: 'Mira',
+    62: 'SNIbc',
+    64: 'Kilonova',
+    65: 'M-dwarf',
+    67: 'SNIa-91bg',
+    88: 'AGN',
+    90: 'SNIa',
+    92: 'RR lyrae',
+    95: 'SLSN-I',
+    #991: Others,
+    #992: Others,
+    #993: Others,
+    #994: Others, # Si lo considero, manualmente deberia cambiarlo en get_plasticc
+  }
+  dict_mapping_classes: {
+    RR lyrae: 0,
+    AGN: 1,
+    SNII: 2,
+    SNIa: 3,
+    M-dwarf: 4,
+    Eclip. Binary: 5,
+    SNIa-91bg: 6,
+    SLSN-I: 7,
+    SNIbc: 8,
+    TDE: 9,
+    SNIax: 10,
+    Single u-lens: 11,
+    Kilonova: 12,
+    Mira: 13,
+  }
+
+elasticc_1:
+  path_data: 'data/lightcurves/elasticc_1/raw'
+  path_partition: 'data/lightcurves/elasticc_1/ATAT_partition'
+  dict_columns: {
+    snid: 'SNID',
+    mjd: 'MJD',
+    flux: 'FLUXCAL',
+    flux_err: 'FLUXCALERR',
+    photflag: 'PHOTFLAG',
+    band: 'BAND',
+    label: 'label'
+  }
+  all_bands: {
+    u: 0, 
+    g: 1, 
+    r: 2, 
+    i: 3, 
+    z: 4, 
+    Y: 5,
+    }
+  dict_mapping_real_classes: {
+    AGN: 'AGN',
+    CART: 'CART',
+    Cepheid: 'Cepheid',
+    d-Sct: 'Delta Scuti',
+    dwarf-nova: 'Dwarf Novae',
+    EB: 'EB',
+    ILOT: 'ILOT',
+    KN_B19: 'KN',
+    KN_K17: 'KN',
+    Mdwarf-flare: 'M-dwarf Flare',
+    PISN: 'PISN',
+    RRL: 'RR Lyrae',
+    SLSN-I+host: 'SLSN',
+    SLSN-I_no_host: 'SLSN',
+    SNIa-91bg: '91bg',
+    SNIa-SALT2: 'Ia',
+    SNIax: 'Iax',
+    SNIb+HostXT_V19: 'Ib/c',
+    SNIb-Templates: 'Ib/c',
+    SNIc+HostXT_V19: 'Ib/c',
+    SNIc-Templates: 'Ib/c',
+    SNIcBL+HostXT_V19: 'Ib/c',
+    SNII+HostXT_V19: 'II',
+    SNII-NMF: 'II',
+    SNII-Templates: 'II',
+    SNIIb+HostXT_V19: 'SN-like/Other',
+    SNIIn+HostXT_V19: 'II',
+    SNIIn-MOSFIT: 'II',
+    TDE: 'TDE',
+    uLens-Binary: 'uLens',
+    uLens-Single-GenLens: 'uLens',
+    uLens-Single_PyLIMA: 'uLens'
+  }
+  dict_mapping_classes: {
+    91bg: 0,
+    AGN: 1,
+    CART: 2,
+    Cepheid: 3,
+    Delta Scuti: 4,
+    Dwarf Novae: 5,
+    EB: 6,
+    II: 7,
+    ILOT: 8,
+    Ia: 9,
+    Iax: 10,
+    Ib/c: 11,
+    KN: 12,
+    M-dwarf Flare: 13,
+    PISN: 14,
+    RR Lyrae: 15,
+    SLSN: 16,
+    SN-like/Other: 17,
+    TDE: 18,
+    uLens: 19
+  }

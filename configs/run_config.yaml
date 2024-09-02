@@ -1,0 +1,75 @@
+hydra:
+  run:
+    dir: .
+  output_subdir: null 
+
+ft_classification:
+  results_dir: 'results'
+  exp_description: '' #'aug_train_128000'
+
+  model_name: 'swinv2' #'swin' # clip #'swinv2'
+  checkpoint: {
+    'use': true,
+    #'pretrained_model': 'google/vit-base-patch32-224-in21k' ,
+    #'pretrained_model': "facebook/deit-base-distilled-patch16-224",
+    #'pretrained_model': "microsoft/swin-base-patch4-window7-224",
+    #'pretrained_model': "microsoft/swinv2-base-patch4-window8-256",
+    'pretrained_model': "microsoft/swinv2-tiny-patch4-window8-256",
+    #'pretrained_model': "openai/clip-vit-base-patch32" ,
+  } 
+  list_folds: [0] #, 1, 2, 3, 4]
+  
+  # General Configuration
+  debug: false
+
+  # Loaders Configuration
+  loader:
+    # images directory
+    #path_data: 'data/images/plasticc/scaler_PointsErrors_grid_224'
+    #path_data: 'data/images/astromer/alcock/minmax_by_obj_224/100'
+    #path_data: data/images/plasticc/minmax_tensors_bands6_grid_224
+    #path_data: 'data/images/plasticc/minmax_tensors_bands6_2x1grid_diffColors_256'
+    path_data: 'data/images/elasticc_1/minmax_by_obj_256'
+    num_workers: 15
+
+  # Training Configuration
+  training:
+    lr: 5.0e-6
+    patience: 10
+    num_epochs: 10000
+    batch_size: 64
+    use_weighted_sampling: true
+    monitor: 'f1/val' #'loss/val' # f1/val
+
+    classifier: {
+      use: true,
+      only_train_classifier: false,
+      use_plasticc_loss: false,
+      large_clf: false,
+      use_plasticc_class_99: false,
+    }
+
+    use_metadata: false
+    columns_to_use: [ # implementado en Swinv2
+      'ra', 
+      'decl', 
+      'gal_l', 
+      'gal_b', 
+      'ddf', 
+      'hostgal_specz', 
+      'hostgal_photoz', 
+      'hostgal_photoz_err', 
+      'distmod', 
+      'mwebv',
+      'flux_mean',
+      'flux_std',
+      ]
+
+    version_text_train: 'v0'
+    version_text_test: 'v0'
+    use_captions: false # Cada imagen debe tener un caption
+
+    # CoOp
+    context_length: 16
+
+
