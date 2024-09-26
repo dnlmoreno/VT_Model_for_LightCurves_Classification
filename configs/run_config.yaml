@@ -7,16 +7,25 @@ ft_classification:
   results_dir: 'results'
   exp_description: '' #'aug_train_128000'
 
-  model_name: 'swinv2' #'swin' # clip #'swinv2'
+  model_name: 'swin' #'swin' # clip #'swinv2'
   checkpoint: {
+    'use': false,
+    'exp_name': 'ft_classification/elasticc_1/testing',
+    'run_name': '2024-08-31_01-39-33',
+    'results_dir': 'results',
+    #'pretrained_model': "microsoft/swinv2-tiny-patch4-window8-256",
+  } 
+  pretrained_model: {
     'use': true,
+    #'pretrained_model': "openai/clip-vit-base-patch32" ,
     #'pretrained_model': 'google/vit-base-patch32-224-in21k' ,
     #'pretrained_model': "facebook/deit-base-distilled-patch16-224",
     #'pretrained_model': "microsoft/swin-base-patch4-window7-224",
     #'pretrained_model': "microsoft/swinv2-base-patch4-window8-256",
-    'pretrained_model': "microsoft/swinv2-tiny-patch4-window8-256",
-    #'pretrained_model': "openai/clip-vit-base-patch32" ,
-  } 
+    #'path': "microsoft/swinv2-large-patch4-window12to16-192to256-22kto1k-ft",
+    'path': "microsoft/swin-large-patch4-window12-384"
+    #'path': "microsoft/swinv2-tiny-patch4-window8-256",
+  }
   list_folds: [0] #, 1, 2, 3, 4]
   
   # General Configuration
@@ -29,16 +38,21 @@ ft_classification:
     #path_data: 'data/images/astromer/alcock/minmax_by_obj_224/100'
     #path_data: data/images/plasticc/minmax_tensors_bands6_grid_224
     #path_data: 'data/images/plasticc/minmax_tensors_bands6_2x1grid_diffColors_256'
-    path_data: 'data/images/elasticc_1/minmax_by_obj_256'
+    #path_data: 'data/images/elasticc_1/minmax_by_obj_256'
+    path_data: 'data/images/alcock/20/minmax_by_obj_3.84_m2.0_l0.5'
+    #path_data: 'data/images/plasticc/minmax_by_obj_256_only_test_1391921'
+    #path_data: 'data/images/plasticc/minmax_by_obj_256_augdata_oversampling_max_class'
+    #path_data: 'data/images/plasticc/minmax_by_obj_256_augdata_oversampling_30000_class'
+    #path_data: data/images/alcock/500/minmax_by_obj_256
     num_workers: 15
 
   # Training Configuration
   training:
-    lr: 5.0e-6
+    lr: 5.0e-5
     patience: 10
     num_epochs: 10000
     batch_size: 64
-    use_weighted_sampling: true
+    use_weighted_sampling: false
     monitor: 'f1/val' #'loss/val' # f1/val
 
     classifier: {
@@ -50,21 +64,23 @@ ft_classification:
     }
 
     use_metadata: false
-    columns_to_use: [ # implementado en Swinv2
-      'ra', 
-      'decl', 
-      'gal_l', 
-      'gal_b', 
-      'ddf', 
-      'hostgal_specz', 
-      'hostgal_photoz', 
-      'hostgal_photoz_err', 
-      'distmod', 
-      'mwebv',
-      'flux_mean',
-      'flux_std',
+    filter_columns: { # implementado en Swinv2
+      use: false,
+      columns: [
+        'ra', 
+        'decl', 
+        'gal_l', 
+        'gal_b', 
+        'ddf', 
+        'hostgal_specz', 
+        'hostgal_photoz', 
+        'hostgal_photoz_err', 
+        'distmod', 
+        'mwebv',
+        'flux_mean',
+        'flux_std',
       ]
-
+    }
     version_text_train: 'v0'
     version_text_test: 'v0'
     use_captions: false # Cada imagen debe tener un caption

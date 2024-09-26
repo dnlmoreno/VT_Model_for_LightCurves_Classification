@@ -4,13 +4,12 @@ from transformers import AutoImageProcessor, Swinv2Model
 class LitModel(LitBaseModel):
     def __init__(self, data_info, **kwargs):
         super().__init__(data_info, **kwargs)
+        use_pt_model = kwargs.get('pretrained_model', {}).get('use', False)
 
-        use_ckpt = kwargs.get('checkpoint', {}).get('use', False)
-
-        if use_ckpt:
-            pretrained_model = kwargs['checkpoint']['pretrained_model']
-            self.model = Swinv2Model.from_pretrained(pretrained_model).train()
-            self.processor = AutoImageProcessor.from_pretrained(pretrained_model)
+        if use_pt_model:
+            path_pt_model = kwargs['pretrained_model']['path']
+            self.model = Swinv2Model.from_pretrained(path_pt_model).train()
+            self.processor = AutoImageProcessor.from_pretrained(path_pt_model)
         else:
             raise "You need to define a model"
         

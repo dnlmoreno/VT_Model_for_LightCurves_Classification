@@ -34,9 +34,10 @@ def get_plasticc_from_test(dataset_config, fold, subset):
 
     df_lc = []
     for i, path in enumerate(glob.glob(f'{path_data}/test_set_batch*')):
-        df = pd.read_parquet(path)
+        df = pd.read_csv(path)
         df = df[df[snid_name].isin(df_obj_label[snid_name])]
         df_lc.append(df)
+    df_lc = pd.concat(df_lc)
 
     df_partitions = pd.read_parquet(path_partition)
     if 'test' == subset:
@@ -50,6 +51,30 @@ def get_plasticc_from_test(dataset_config, fold, subset):
 
     return df_lc, df_obj_label
 
+def get_plasticc_aug(df_lc, df_obj_label, dataset_config, fold, subset):
+    path_data = dataset_config['path_data']
+    snid_name = dataset_config['dict_columns']['snid']
+    target_name = dataset_config['dict_columns']['label']
+
+    df_aug = []
+    df_obj_label_aux = []
+    for i, path in enumerate(glob.glob(f'{path_data}/fold_{fold}/*')):
+        class_name = path.split('/')[-1].split('_')[0]
+        df = pd.read_parquet(path)
+        df_aug.append(df)
+        unique_objs = df[snid_name].unique()
+        df_obj_label_aux.append(pd.DataFrame({
+            snid_name: unique_objs,
+            target_name: [class_name] * len(unique_objs),
+            'label_int': [dataset_config['dict_mapping_classes'][class_name]] * len(unique_objs),
+        }))
+        
+    df_aug = pd.concat(df_aug)
+    df_obj_label_aux = pd.concat(df_obj_label_aux)
+    df_lc = pd.concat([df_lc[df_aug.columns], df_aug])
+    df_obj_label = pd.concat([df_obj_label[df_obj_label_aux.columns], df_obj_label_aux])
+    
+    return df_lc, df_obj_label
 
 def get_plasticc(dataset_config, fold, subset):
     path_data = dataset_config['path_data']
@@ -84,6 +109,7 @@ def get_plasticc(dataset_config, fold, subset):
             df = pd.read_parquet(path)
             df = df[df[snid_name].isin(df_obj_label[snid_name])]
             df_lc.append(df)
+        df_lc = pd.concat(df_lc)
 
     return df_lc, df_obj_label
 
@@ -107,6 +133,16 @@ def get_elasticc_1(dataset_config, fold, subset):
         class_name = path.split('/')[-1].split('.')[0].split('lc_')[-1]
         class_name = dataset_config['dict_mapping_real_classes'][class_name]
         df = pd.read_parquet(path)
+
+        grouped = df.groupby(snid_name)
+        first_detection_mjd = grouped.apply(lambda x: x[x['PHOTFLAG'].isin([4096, 6144])]['MJD'].min())
+        last_detection_mjd = grouped.apply(lambda x: x[x['PHOTFLAG'].isin([4096, 6144])]['MJD'].max())
+        df['first_detection_mjd'] = df[snid_name].map(first_detection_mjd)
+        df['last_detection_mjd'] = df[snid_name].map(last_detection_mjd)
+        df = df[(df['MJD'] >= df['first_detection_mjd'] - 30) & 
+                (df['MJD'] <= df['last_detection_mjd'])]
+        df = df.drop(columns=['first_detection_mjd', 'last_detection_mjd'])
+
         df_lc.append(df)
         unique_objs = df[snid_name].unique()
         df_obj_label.append(pd.DataFrame({
@@ -123,16 +159,23 @@ def get_elasticc_1(dataset_config, fold, subset):
 
     return df_lc, df_obj_label
 
+
 def get_dataset(config, dataset_config, fold, subset):
     print('Data Loading...')
     if config['data_name'] == 'plasticc':
         if config['extra_plasticc']['only_test']['use']:
-            dataset_config['path_partition'] = config['extra_plasticc']['path_partition']
+            dataset_config['path_partition'] = config['extra_plasticc']['only_test']['path_partition']
             df_lc, df_obj_label = get_plasticc_from_test(dataset_config, fold, subset)
         else:
             df_lc, df_obj_label = get_plasticc(dataset_config, fold, subset)
+
+        if subset == 'train' and config['extra_plasticc']['augmented_data']['use']:
+            dataset_config['path_data'] = config['extra_plasticc']['augmented_data']['path_data']
+            df_lc, df_obj_label = get_plasticc_aug(df_lc, df_obj_label, dataset_config, fold, subset)
+
     elif config['data_name'] == 'elasticc_1':
         df_lc, df_obj_label = get_elasticc_1(dataset_config, fold, subset)
+
     else:
         raise f"We don't have the implementation for the dataset called {config['data_name']}"
     return df_lc, df_obj_label 
@@ -217,6 +260,12 @@ def main(config: DictConfig) -> None:
     dataset_config = load_yaml('configs/datasets_config.yaml')[config['data_name']]
     saved_parent_dir = f"data/images/{config['data_name']}"
 
+    dataset_config.update({
+        'name_dataset': config['data_name'],
+        'num_classes': len(dataset_config['dict_mapping_classes']),
+        'num_channels': 3,
+    })
+         
     test_fold = 0
     for subset in config['subsets']:
         folds_to_use = [test_fold] if subset == 'test' else config['list_folds']
@@ -269,6 +318,9 @@ def main(config: DictConfig) -> None:
                 path_save += f"/fold_{fold}"
             join_shards(source_folder=path_save_tmp,
                         destination_folder=path_save)
+            
+    save_yaml(dataset_config, f"{saved_parent_dir}/{config['final_folder_name']}/data_info.yaml")
+
 
 if __name__ == '__main__':
 

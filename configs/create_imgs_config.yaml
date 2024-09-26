@@ -3,38 +3,48 @@ hydra:
     dir: .
   output_subdir: null 
 
-final_folder_name: 'minmax_by_obj_256'
+#final_folder_name: 'minmax_by_obj_384_m0.5_l1.0_a05_f-o' 
 
-data_name: 'elasticc_1'
-subsets: ['test', 'train', 'val'] # 'train', 
-list_folds: [0] #, 2, 3, 4]
-num_cores: 30
-samples_per_shard: 10000
+data_name: 'alcock'
+subsets: ['train', 'val', 'test'] # 'train', 
+list_folds: [0] #, 1, 2] #, 3, 4]
+num_cores: 20
+samples_per_shard: 1000
 
 norm_name: 'minmax_by_obj'
 use_err: false
 
 fig_params: {
-    use_err: true,
-    figsize: [2.56, 2.56],
+    figsize: [3.84, 3.84], # [2.56, 2.56],
     fmt: '-o', #-o
-    markersize: 2.5,
-    linewidth: 1.2,
+    markersize: 2., # 2.5,
+    linewidth: 0.5, # 1.2,
     colors: {
-      0: '#00FF70',
-      1: '#70FF00',
-      2: '#FF0070',
-      3: '#FF7000',
-      4: '#0070FF',
-      5: '#7000FF'
-      }, # depende de la cantidad de bandas
+      #0: '#00FF70',
+      #1: '#70FF00',
+      #2: '#FF0070',
+      #3: '#FF7000',
+      #4: '#0070FF',
+      #5: '#7000FF',
+      0: '#00FF7F',  # Cercano al verde
+      1: '#7FFF00',  # Cercano al verde
+      2: '#FF007F',  # Cercano al rojo
+      3: '#FF7F00',  # Cercano al rojo
+      4: '#007FFF',  # Cercano al azul
+      5: '#7F00FF',   # Cercano al azul
+    },
     alpha: 0.5,
     ylim: [-0.05, 1.05],
 }
 
 extra_plasticc: {
   'only_test': {
-    'use': True,
-    'path_partition': 'data/lightcurves/plasticc/partitions/test',
+    'use': False,
+    'path_partition': 'data/lightcurves/plasticc/partitions/test/stratified_5fold_splits_1391921_objs.parquet',
+  },
+  'augmented_data': {
+    'use': False,
+    'path_data': 'data/lightcurves/plasticc/augmented_data/oversampling_30000_class',
   }
 }
+

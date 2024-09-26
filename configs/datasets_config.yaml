@@ -65,8 +65,8 @@ elasticc_1:
     flux: 'FLUXCAL',
     flux_err: 'FLUXCALERR',
     photflag: 'PHOTFLAG',
-    band: 'BAND',
-    label: 'label'
+    band: 'BAND', 
+    label: 'label',
   }
   all_bands: {
     u: 0, 
@@ -132,3 +132,153 @@ elasticc_1:
     TDE: 18,
     uLens: 19
   }
+  col_metadata: [
+    'HOSTGAL2_ELLIPTICITY',
+    'HOSTGAL2_MAG_Y',
+    'HOSTGAL2_MAG_g',
+    'HOSTGAL2_MAG_i',
+    'HOSTGAL2_MAG_r',
+    'HOSTGAL2_MAG_u',
+    'HOSTGAL2_MAG_z',
+    'HOSTGAL2_MAGERR_Y',
+    'HOSTGAL2_MAGERR_g',
+    'HOSTGAL2_MAGERR_i',
+    'HOSTGAL2_MAGERR_r',
+    'HOSTGAL2_MAGERR_u',
+    'HOSTGAL2_MAGERR_z',
+    'HOSTGAL2_SNSEP',
+    'HOSTGAL2_SQRADIUS',
+    'HOSTGAL2_PHOTOZ',
+    'HOSTGAL2_PHOTOZ_ERR',
+    'HOSTGAL2_ZPHOT_Q000',
+    'HOSTGAL2_ZPHOT_Q010',
+    'HOSTGAL2_ZPHOT_Q020',
+    'HOSTGAL2_ZPHOT_Q030',
+    'HOSTGAL2_ZPHOT_Q040',
+    'HOSTGAL2_ZPHOT_Q050',
+    'HOSTGAL2_ZPHOT_Q060',
+    'HOSTGAL2_ZPHOT_Q070',
+    'HOSTGAL2_ZPHOT_Q080',
+    'HOSTGAL2_ZPHOT_Q090',
+    'HOSTGAL2_ZPHOT_Q100',
+    'HOSTGAL2_SPECZ',
+    'HOSTGAL2_SPECZ_ERR',
+    'HOSTGAL_ELLIPTICITY',
+    'HOSTGAL_MAG_Y',
+    'HOSTGAL_MAG_g',
+    'HOSTGAL_MAG_i',
+    'HOSTGAL_MAG_r',
+    'HOSTGAL_MAG_u',
+    'HOSTGAL_MAG_z',
+    'HOSTGAL_MAGERR_Y',
+    'HOSTGAL_MAGERR_g',
+    'HOSTGAL_MAGERR_i',
+    'HOSTGAL_MAGERR_r',
+    'HOSTGAL_MAGERR_u',
+    'HOSTGAL_MAGERR_z',
+    'HOSTGAL_SNSEP',
+    'HOSTGAL_SQRADIUS',
+    'HOSTGAL_PHOTOZ',
+    'HOSTGAL_PHOTOZ_ERR',
+    'HOSTGAL_ZPHOT_Q000',
+    'HOSTGAL_ZPHOT_Q010',
+    'HOSTGAL_ZPHOT_Q020',
+    'HOSTGAL_ZPHOT_Q030',
+    'HOSTGAL_ZPHOT_Q040',
+    'HOSTGAL_ZPHOT_Q050',
+    'HOSTGAL_ZPHOT_Q060',
+    'HOSTGAL_ZPHOT_Q070',
+    'HOSTGAL_ZPHOT_Q080',
+    'HOSTGAL_ZPHOT_Q090',
+    'HOSTGAL_ZPHOT_Q100',
+    'HOSTGAL_SPECZ',
+    'HOSTGAL_SPECZ_ERR',
+    'MWEBV',
+    'MWEBV_ERR',
+    'REDSHIFT_HELIO',
+    'REDSHIFT_HELIO_ERR'
+  ]
+
+alcock:
+  path_data: 'data/lightcurves/astromer'
+  list_spc: [20] #, 50, 100, 500, 'all'] 
+  dict_columns: {
+    snid: 'lcid',
+    mjd: 'mjd',
+    flux: 'flux',
+    flux_err: 'flux_err',
+   # photflag: 'detected',
+   # band: 'passband',
+    label: 'label'
+  }
+  all_bands: false
+  dict_mapping_classes: {
+    Cep_0: 0,  # Cepheid Type I
+    Cep_1: 1,  # Cepheid Type II
+    EC: 2,     # Eclipsing Binary
+    LPV: 3,    # Long Period Variable
+    RRab: 4,   # RR Lyrae Type AB
+    RRc: 5,    # RR Lyrae Type C
+  }
+
+ogle:
+  path_data: 'data/lightcurves/astromer'
+  list_spc: [20] #, 50, 100, 500, 'all'] 
+  dict_columns: {
+    snid: 'lcid',
+    mjd: 'mjd',
+    flux: 'flux',
+    flux_err: 'flux_err',
+   # photflag: 'detected',
+   # band: 'passband',
+    label: 'label'
+  }
+  all_bands: false
+  dict_mapping_classes: {
+    EC: 0,      # Eclipsing Binary
+    ED: 1,      # Detached Binary (often used synonymously with EC in some contexts)
+    ESD: 2,     # Semi-Detached Binary
+    Mira: 3,    # Mira Variable
+    OSARG: 4,   # Small Amplitude Red Giants (often treated as semi-regular or less variable than Mira)
+    RRab: 5,    # RR Lyrae Type AB
+    RRc: 6,     # RR Lyrae Type C
+    SRV: 7,     # Semi-Regular Variable
+    cep: 8,     # Cepheid Variables
+    dsct: 9,    # Delta Scuti
+    }
+
+atlas:
+  path_data: 'data/lightcurves/astromer'
+  list_spc: [20] #, 50, 100, 500, 'all']
+  dict_columns: {
+    snid: 'lcid',
+    mjd: 'mjd',
+    flux: 'flux',
+    flux_err: 'flux_err',
+   # photflag: 'detected',
+   # band: 'passband',
+    label: 'label'
+  }
+  all_bands: false
+  dict_mapping_classes: {
+    CB: 0,      # Close Binaries
+    DB: 1,      # Detached Binary
+    Mira: 2,    # Mira Variable
+    Other: 3,   # Other categories not specified here
+    Pulse: 4,   # Pulsating stars (General category)
+  }
+
+macho:
+  path_data: 'data/lightcurves/astromer'
+  list_spc: ['all']
+  dict_columns: {
+    snid: 'lcid',
+    mjd: 'mjd',
+    flux: 'flux',
+    flux_err: 'flux_err',
+   # photflag: 'detected',
+   # band: 'passband',
+    label: 'label'
+  }
+  all_bands: false
+  dict_mapping_classes: false

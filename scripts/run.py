@@ -53,6 +53,17 @@ def perform_ft_classification(run, config, dataset, experiment_name, data_info):
                        config=config)
 
     # Save params:
+    if config['checkpoint']['use']:
+        ckpt_dir = handle_ckpt_dir(config, fold=config['loader']['fold'])
+        ckpt_model = sorted(glob.glob(ckpt_dir + "/*.ckpt"))[-1]
+        if os.path.exists(ckpt_model):
+            model = load_checkpoint(model, ckpt_model)            
+        else:
+            raise FileNotFoundError(f"Checkpoint file not found at {ckpt_dir}")
+
+        loaded_config = load_yaml(path='{}/hparams.yaml'.format(ckpt_dir))
+        config['model_name'] = loaded_config['model_name']
+
     os.makedirs(f'{EXPDIR}/model', exist_ok=True)
     save_yaml(dict(model.hparams), path=f'{EXPDIR}/model/hparams.yaml')
 

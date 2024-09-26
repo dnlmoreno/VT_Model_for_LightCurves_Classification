@@ -1,5 +1,12 @@
 data/
+!src/data
 
 results/
+results_vis/
 
+lightning_logs/
 *.log
+
+*.jpg
+
+chunk*

@@ -30,15 +30,17 @@ class LitBaseModel(L.LightningModule, ABC):
         self.cosine_decay = self.cfg.get('cosine_decay')
         self.gradient_clip_val = 1.0 if self.cfg.get('use_gradient_clipping') else 0
         self.use_metadata = self.cfg['use_metadata'] 
-        self.columns_to_use = self.cfg.get('columns_to_use')
+        
         self.loss_fn = F.cross_entropy
 
         if self.cfg['classifier']['use_plasticc_class_99']: self.num_classes += 1
         #if self.cfg['classifier']['use_plasticc_loss']: self.loss_fn = WeightedMultiClassLogLoss(self.num_classes, data_info['class_counts'])
 
         if self.use_metadata:
-            path_metadata = kwargs['loader']['path_data']
-            self.metadata = pd.read_parquet(f'{path_metadata}/metadata_qt.parquet')[self.columns_to_use]
+            filter_columns = self.cfg['filter_columns']
+            self.metadata = pd.read_parquet(f'data/metadata/metadata_qt_{self.name_dataset}.parquet')
+            if filter_columns['use']:
+                self.metadata = self.metadata[filter_columns['columns']]
 
         if self.cfg['classifier']['only_train_classifier']:
             self.freeze_model()
@@ -83,7 +85,7 @@ class LitBaseModel(L.LightningModule, ABC):
         if self.use_metadata:
             metadata = torch.from_numpy(self.metadata[self.metadata.index.isin(snids)].values).float().to(device)
             pooled_output = torch.cat((pooled_output, metadata), dim=1)
-
+            
         logits = self.classifier(pooled_output)
         y_pred_prob = F.softmax(logits, dim=1)
 
@@ -117,7 +119,7 @@ class LitBaseModel(L.LightningModule, ABC):
         return self._shared_step(batch_data, 'test')
 
     def predict_step(self, batch_data, batch_idx, dataloader_idx=0):
-        out = self._shared_step(batch_data, 'predict')
+        out = self._shared_step(batch_data, 'test')
 
         return {'id': out['id'], 
                 'loss': out['loss'].item(),
