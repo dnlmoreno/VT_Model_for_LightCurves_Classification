@@ -265,6 +265,9 @@ def main(config: DictConfig) -> None:
         'num_classes': len(dataset_config['dict_mapping_classes']),
         'num_channels': 3,
     })
+
+    params = config['fig_params']
+    final_folder_name = f"{config['norm_name']}_{params['figsize'][0]}_m{params['markersize']}_l{params['linewidth']}"
          
     test_fold = 0
     for subset in config['subsets']:
@@ -305,7 +308,7 @@ def main(config: DictConfig) -> None:
             pool.join()
 
             path_save_tmp = f"{saved_parent_dir}/temp_shards"
-            path_save = f"{saved_parent_dir}/{config['final_folder_name']}"
+            path_save = f"{saved_parent_dir}/{final_folder_name}"
 
             try:
                 os.makedirs(path_save, exist_ok=True)
@@ -319,7 +322,7 @@ def main(config: DictConfig) -> None:
             join_shards(source_folder=path_save_tmp,
                         destination_folder=path_save)
             
-    save_yaml(dataset_config, f"{saved_parent_dir}/{config['final_folder_name']}/data_info.yaml")
+    save_yaml(dataset_config, f"{saved_parent_dir}/{final_folder_name}/data_info.yaml")
 
 
 if __name__ == '__main__':

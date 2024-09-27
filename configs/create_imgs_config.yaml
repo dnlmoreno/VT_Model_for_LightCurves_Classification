@@ -3,22 +3,20 @@ hydra:
     dir: .
   output_subdir: null 
 
-#final_folder_name: 'minmax_by_obj_384_m0.5_l1.0_a05_f-o' 
-
-data_name: 'alcock'
+data_name: 'elasticc_1'
 subsets: ['train', 'val', 'test'] # 'train', 
 list_folds: [0] #, 1, 2] #, 3, 4]
-num_cores: 20
+num_cores: 30
 samples_per_shard: 1000
 
 norm_name: 'minmax_by_obj'
 use_err: false
 
 fig_params: {
-    figsize: [3.84, 3.84], # [2.56, 2.56],
+    figsize: [2.24, 2.24], # [2.56, 2.56],
     fmt: '-o', #-o
-    markersize: 2., # 2.5,
-    linewidth: 0.5, # 1.2,
+    markersize: 3., # 2.5,
+    linewidth: 1.5, # 1.2,
     colors: {
       #0: '#00FF70',
       #1: '#70FF00',
