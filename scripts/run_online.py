@@ -16,6 +16,7 @@ from lightning.pytorch.loggers import TensorBoardLogger, MLFlowLogger, CSVLogger
 from lightning.pytorch.profilers import PyTorchProfiler
 
 from src.training.callbacks.ModelSummary import ModelSummary
+from scripts.predict_clf import predict
 from scripts.utils import *
 
 import warnings
@@ -25,49 +26,54 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 if torch.cuda.is_available():
     gpu_name = torch.cuda.get_device_name(torch.cuda.current_device())
-    logging.info(f"GPU name: {gpu_name}")
+    logging.info(f'🖥️ GPU detected: {gpu_name}')
 else:
-    logging.info("No GPU available.")
+    logging.info('⚠️ No GPU available.')
 
-def load_dataset(data_info, config):
+def load_dataset(name_dataset, config):
     LitData_module = importlib.import_module(f"src.data.LitData")
-    data_module = getattr(LitData_module, 'LitData')(data_info, **config)
+    data_module = getattr(LitData_module, 'LitData')(name_dataset, **config)
     return data_module
 
-def load_model(data_info, config):
+def load_model(dataset_config, config):
     model_name = config['model_name']
     LitModel_module = importlib.import_module(f"src.models.LitModels.{model_name}")
-    model = getattr(LitModel_module, 'LitModel')(data_info, **config)
+    model = getattr(LitModel_module, 'LitModel')(data_info=dataset_config, **config)
     return model
 
-def perform_ft_classification(run, config, dataset, experiment_name, data_info):
+def perform_ft_classification(run, config, dataset, experiment_name):
 
     experiment_id = run.info.experiment_id
     run_id = run.info.run_id
     EXPDIR = '{}/ml-runs/{}/{}/artifacts'.format(config['results_dir'], experiment_id, run_id)
     os.makedirs(EXPDIR, exist_ok=True)
+    logging.info(f'📁 Experiment directory created: {EXPDIR}')
 
     # Model
-    #dataset.setup('fit')
-    model = load_model(data_info=data_info,
-                       config=config)
+    logging.info('🗂️  Creating the model.')
+    model = load_model(dataset_config=dataset.dataset_config.copy(), config=config)
 
     # Save params:
     if config['checkpoint']['use']:
+        logging.info('🔄 Checkpoint loading is enabled.')
         ckpt_dir = handle_ckpt_dir(config, fold=config['loader']['fold'])
         ckpt_model = sorted(glob.glob(ckpt_dir + "/*.ckpt"))[-1]
         if os.path.exists(ckpt_model):
+            logging.info(f'📦 Loading checkpoint from {ckpt_model}.')
             model = load_checkpoint(model, ckpt_model)            
         else:
             raise FileNotFoundError(f"Checkpoint file not found at {ckpt_dir}")
 
         loaded_config = load_yaml(path='{}/hparams.yaml'.format(ckpt_dir))
         config['model_name'] = loaded_config['model_name']
+        logging.info(f'✅ Model parameters loaded from checkpoint: {config["model_name"]}')
 
     os.makedirs(f'{EXPDIR}/model', exist_ok=True)
     save_yaml(dict(model.hparams), path=f'{EXPDIR}/model/hparams.yaml')
+    logging.info('💾 Model hyperparameters saved.')
 
     # Callbacks 
+    logging.info('🔧 Setting up training callbacks.')
     monitor = config['training']['monitor']
     checkpoint = ModelCheckpoint(
         monitor=monitor,
@@ -88,18 +94,12 @@ def perform_ft_classification(run, config, dataset, experiment_name, data_info):
     all_callbacks = [checkpoint, early_stopping, model_summary]
 
     # Loggers
+    logging.info('📝 Initializing loggers for MLflow and CSV logging.')
     mlflow_logger = MLFlowLogger(
         experiment_name=experiment_name,
         tracking_uri=f"file:{config['results_dir']}/ml-runs",
         )
     mlflow_logger._run_id = run.info.run_id
-
-    #tensorboard_logger = TensorBoardLogger(
-    #    save_dir='{}/tensorboard_logs'.format(config['results_dir']), 
-    #    name=f"ft_classification/{config['run_name']}", 
-    #    version=f"Fold_{config['loader']['fold']}",
-    #    default_hp_metric=False
-    #    )
     
     csv_logger = CSVLogger(
         save_dir=EXPDIR, 
@@ -107,15 +107,17 @@ def perform_ft_classification(run, config, dataset, experiment_name, data_info):
         version='.',
         )
     
-    all_loggers = [mlflow_logger, csv_logger] #, tensorboard_logger]
+    all_loggers = [mlflow_logger, csv_logger] 
                 
     # If debugging
     if config['debug']:
+        logging.warning('⚠️ Debug mode enabled: Running only one epoch.')
         max_epochs = 1
     else:
         max_epochs = config['training']['num_epochs']
 
     # Training
+    logging.info('🏋️‍♂️ Starting model training.')
     trainer = L.Trainer(
         callbacks=all_callbacks,
         logger=all_loggers,
@@ -128,21 +130,30 @@ def perform_ft_classification(run, config, dataset, experiment_name, data_info):
     )
 
     trainer.fit(model, dataset)
+    logging.info('🎉 Training completed successfully.')
 
     # Testing
     try:
-        dataset.setup('test')
-        trainer.test(dataloaders=dataset.test_dataloader(),
-                     ckpt_path="best")
-    except:
-        print('We finish the training without evaluating on the Test Set, because It was not created.')
+        logging.info('🧪 Starting test evaluation.')
+        trainer.test(dataloaders=dataset.test_dataloader(), ckpt_path="best")
+        logging.info('✅ Test evaluation completed successfully.')
+    except Exception as e:
+        logging.error('❌ Test set evaluation failed. The test set was not created.')
+        logging.exception(e)
+
+    path_save_metrics = f'{EXPDIR}/metrics'
+    os.makedirs(path_save_metrics, exist_ok=True)
+
+    #ckpt_dir = handle_ckpt_dir(config, fold=config['loader']['fold'])
+    #ckpt_model = sorted(glob.glob(ckpt_dir + "/*.ckpt"))[-1]
+    #best_model = load_checkpoint(model, ckpt_model)   
+    #print(type(best_model))  
+    ##loaded_model = model.load_from_checkpoint(checkpoint.best_model_path).eval()
+    #_ = predict(dataset, best_model, path_save_metrics)
     
-    #if any(isinstance(logger, CSVLogger) for logger in all_loggers):
-    #    plot_joint_learning_curves()
 
-
-@hydra.main(config_path=os.getenv("HYDRA_CONFIG_PATH", "../configs"),
-            config_name=os.getenv("HYDRA_CONFIG_NAME", "cfg_hparams_tuning"), 
+@hydra.main(config_path=os.getenv("HYDRA_CONFIG_PATH", "../configs/online"),
+            config_name=os.getenv("HYDRA_CONFIG_NAME", "run_config"), 
             version_base=None)
 
 def run(config: DictConfig) -> None:
@@ -150,28 +161,37 @@ def run(config: DictConfig) -> None:
     config = config['ft_classification']
     list_folds = config.pop('list_folds')
 
+    config['hp_tuning'] = f"{config['imgs_params']['norm_name']}_" \
+                          f"{config['imgs_params']['fig_params']['figsize'][0]}_" \
+                          f"m{config['imgs_params']['fig_params']['markersize']}_" \
+                          f"l{config['imgs_params']['fig_params']['linewidth']}_" \
+                          f"e{config['imgs_params']['use_err']}_" \
+                          f"{config['imgs_params']['input_type']}"
+    
     # Dataset info
-    data_info = load_yaml(path='{}/data_info.yaml'.format(config['loader']['path_data']))
-    name_dataset = data_info['name_dataset']
+    name_dataset = config['loader']['path_data'].split('/')[2]
 
     # Setup MLflow
+    logging.info('⚙️  Setting up MLflow tracking URI and experiment configuration.')
     mlflow.set_tracking_uri(f"file:{config['results_dir']}/ml-runs")
     experiment_name = f"ft_classification/{name_dataset}/testing"
     mlflow.set_experiment(experiment_name)
 
     config['run_name'] = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     config['gpu_name'] = gpu_name
+
+    logging.info(f'🚩 Starting parent run with name: {config["run_name"]}. Experiment: {experiment_name}')
     with mlflow.start_run(run_name=f"{config['run_name']}") as parent_run:
 
         for fold in list_folds:
-            logging.info(f'We are starting the FT Classification in Fold {fold}.')
+            logging.info(f'📂 Starting FT Classification for Fold {fold}.')
             config['loader']['fold'] = fold
 
             # Data
-            dataset = load_dataset(data_info, config)
+            dataset = load_dataset(name_dataset, config)
 
             with mlflow.start_run(run_name=f"Fold_{fold}_{config['run_name']}", nested=True) as child_run:
-                perform_ft_classification(child_run, config, dataset, experiment_name, data_info)
+                perform_ft_classification(child_run, config, dataset, experiment_name)
 
 
 if __name__ == "__main__":

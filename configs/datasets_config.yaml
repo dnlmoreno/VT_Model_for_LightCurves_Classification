@@ -64,7 +64,6 @@ elasticc_1:
     mjd: 'MJD',
     flux: 'FLUXCAL',
     flux_err: 'FLUXCALERR',
-    photflag: 'PHOTFLAG',
     band: 'BAND', 
     label: 'label',
   }
@@ -201,15 +200,13 @@ elasticc_1:
 
 alcock:
   path_data: 'data/lightcurves/astromer'
-  list_spc: [20] #, 50, 100, 500, 'all'] 
+  list_spc: ['all'] # [20, 50, 100, 500, 'all'] 
   dict_columns: {
     snid: 'lcid',
     mjd: 'mjd',
     flux: 'flux',
     flux_err: 'flux_err',
-   # photflag: 'detected',
-   # band: 'passband',
-    label: 'label'
+    label: 'label',
   }
   all_bands: false
   dict_mapping_classes: {
@@ -221,6 +218,32 @@ alcock:
     RRc: 5,    # RR Lyrae Type C
   }
 
+alcock_multiband:
+  path_data: 'data/lightcurves/alcock/raw'
+  path_partition: 'data/lightcurves/alcock/ASTROMER_partition'
+  list_spc: ['all'] #, 50, 100, 500, 'all'] 
+  dict_columns: {
+    snid: 'lcid',
+    mjd: 'mjd',
+    flux: 'mag',
+    flux_err: 'err',
+    band: 'band',
+    label: 'label',
+  }
+  all_bands: {
+    B: 0, 
+    R: 1, 
+    }
+  dict_mapping_classes: {
+    Cep_0: 0,  # Cepheid Type I
+    Cep_1: 1,  # Cepheid Type II
+    EC: 2,     # Eclipsing Binary
+    LPV: 3,    # Long Period Variable
+    RRab: 4,   # RR Lyrae Type AB
+    RRc: 5,    # RR Lyrae Type C
+  }
+
+
 ogle:
   path_data: 'data/lightcurves/astromer'
   list_spc: [20] #, 50, 100, 500, 'all'] 
@@ -229,9 +252,7 @@ ogle:
     mjd: 'mjd',
     flux: 'flux',
     flux_err: 'flux_err',
-   # photflag: 'detected',
-   # band: 'passband',
-    label: 'label'
+    label: 'label',
   }
   all_bands: false
   dict_mapping_classes: {
@@ -255,9 +276,7 @@ atlas:
     mjd: 'mjd',
     flux: 'flux',
     flux_err: 'flux_err',
-   # photflag: 'detected',
-   # band: 'passband',
-    label: 'label'
+    label: 'label',
   }
   all_bands: false
   dict_mapping_classes: {
@@ -276,9 +295,7 @@ macho:
     mjd: 'mjd',
     flux: 'flux',
     flux_err: 'flux_err',
-   # photflag: 'detected',
-   # band: 'passband',
-    label: 'label'
+    label: 'label',
   }
   all_bands: false
   dict_mapping_classes: false

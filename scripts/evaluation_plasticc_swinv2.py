@@ -98,7 +98,7 @@ def predict(dataset: LightningDataModule,
     single_confusion_matrix(y_true=df_windows_proba['y_true'], 
                             y_pred=df_windows_proba['y_pred'], 
                             order_classes=order_classes,
-                            path_save='elasticc_1_md.jpg')
+                            path_save='elasticc_1_mal_pero_mejor.jpg')
 
     return dict_metrics
 
@@ -106,13 +106,13 @@ def predict(dataset: LightningDataModule,
 if __name__ == "__main__":
 
     config = {
-        'mlflow_dir': 'results/ml-runs',
+        'mlflow_dir': 'results_harvard_2/ml-runs',
 
         'checkpoint': {
             'use': True,
             'exp_name': 'ft_classification/elasticc_1/testing',
-            'run_name': '2024-09-07_13-00-45',
-            'results_dir': 'results',
+            'run_name': '2024-09-30_12-39-43',
+            'results_dir': 'results_harvard_2',
         },
 
         'loader': {
@@ -128,17 +128,17 @@ if __name__ == "__main__":
     data_info = load_yaml(path='./{}/data_info.yaml'.format(hparams['loader']['path_data']))
     print(hparams)
 
-    hparams['training']['batch_size'] = 300
+    hparams['training']['batch_size'] = 500
     hparams['checkpoint'] = {
         'use': True,
         'exp_name': 'ft_classification/elasticc_1/testing',
-        'run_name': '2024-09-07_13-00-45',
-        'results_dir': 'results',
+        'run_name': '2024-09-30_12-39-43',
+        'results_dir': 'results_harvard_2',
     }
 
     hparams['pretrained_model'] = {
         'use': True,
-        'path': "microsoft/swinv2-tiny-patch4-window8-256",
+        'path': "microsoft/swinv2-tiny-patch4-window16-256",
     }
 
     dataset = LitData(**hparams)

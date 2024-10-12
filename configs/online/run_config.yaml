@@ -1,0 +1,73 @@
+hydra:
+  run:
+    dir: .
+  output_subdir: null 
+
+ft_classification:
+  results_dir: 'results'
+  exp_description: '' #'aug_train_128000'
+
+  model_name: 'swinv2'
+  checkpoint: {
+    'use': false,
+    'exp_name': 'ft_classification/elasticc_1/testing',
+    'run_name': '2024-08-31_01-39-33',
+    'results_dir': 'results',
+  } 
+  pretrained_model: {
+    'use': true,
+    'path': "microsoft/swinv2-tiny-patch4-window16-256",
+  }
+  list_folds: [0] #, 1, 2, 3, 4]
+  
+  # General Configuration
+  debug: false
+
+  # Loaders Configuration
+  loader:
+    #path_data: 'data/images/alcock/20/minmax_by_obj_2.56_m1.0_l1.0_eFalse_overlay'
+    path_data: 'data/lightcurves/alcock_multiband'
+    #path_data: 'data/lightcurves/elasticc_1'
+    spc: 20
+    num_workers: 30
+
+  # Training Configuration
+  training:
+    lr: 5.0e-5
+    patience: 10
+    num_epochs: 5
+    batch_size: 64
+    use_weighted_sampling: false
+    monitor: 'f1/val'
+
+    classifier: {
+      use: true,
+      only_train_classifier: false,
+      use_plasticc_loss: false,
+      large_clf: false,
+      use_plasticc_class_99: false,
+    }
+
+    use_metadata: false
+  
+  imgs_params:
+    norm_name: 'minmax_by_obj'
+    input_type: 'overlay'  # '2grid', 'overlay', '6grid' 
+    use_err: false
+
+    fig_params: {
+        figsize: [2.56, 2.56], # [2.56, 2.56],
+        fmt: '-o', #-o
+        markersize: 2.0, # 2.5,
+        linewidth: 1.0, # 1.2,
+        colors: {
+          0: '#00FF7F',  # Cercano al verde
+          1: '#7FFF00',  # Cercano al verde
+          2: '#FF007F',  # Cercano al rojo
+          3: '#FF7F00',  # Cercano al rojo
+          4: '#007FFF',  # Cercano al azul
+          5: '#7F00FF',   # Cercano al azul
+        },
+        alpha: 0.5,
+        ylim: [-0.05, 1.05],
+    }

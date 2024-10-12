@@ -3,20 +3,21 @@ hydra:
     dir: .
   output_subdir: null 
 
-data_name: 'elasticc_1'
+data_name: 'alcock_multiband' # elasticc_1, plasticc, alcock, alcock_multiband
 subsets: ['train', 'val', 'test'] # 'train', 
-list_folds: [0] #, 1, 2] #, 3, 4]
-num_cores: 30
+list_folds: [0] #, 3, 4]
+num_cores: 20
 samples_per_shard: 1000
 
 norm_name: 'minmax_by_obj'
+input_type: '2grid'  # 'grid' # 'overlay'
 use_err: false
 
 fig_params: {
-    figsize: [2.24, 2.24], # [2.56, 2.56],
+    figsize: [2.56, 2.56], # [2.56, 2.56],
     fmt: '-o', #-o
-    markersize: 3., # 2.5,
-    linewidth: 1.5, # 1.2,
+    markersize: 1., # 2.5,
+    linewidth: 1., # 1.2,
     colors: {
       #0: '#00FF70',
       #1: '#70FF00',

@@ -18,15 +18,12 @@ torch.set_float32_matmul_precision('high')
 class LitBaseModel(L.LightningModule, ABC):
     def __init__(self, data_info, **kwargs):
         super().__init__()
-        for key in ['dict_mapping_real_classes', 'col_metadata']:
-            data_info.pop(key, None)
-
         self.save_hyperparameters()
 
         # Hyperparameters
-        #self.name_dataset = len(data_info['dict_mapping_classes'])
-        self.num_classes = len(data_info['dict_mapping_classes'])
-        self.num_channels = 3
+        self.name_dataset = data_info['name_dataset']
+        self.num_classes = data_info['num_classes']
+        self.num_channels = data_info['num_channels']
 
         self.cfg = kwargs['training']
         self.lr = self.cfg['lr']

@@ -7,7 +7,7 @@ ft_classification:
   results_dir: 'results'
   exp_description: '' #'aug_train_128000'
 
-  model_name: 'swin' #'swin' # clip #'swinv2'
+  model_name: 'swinv2' #'swin' # clip #'swinv2'
   checkpoint: {
     'use': false,
     'exp_name': 'ft_classification/elasticc_1/testing',
@@ -21,10 +21,12 @@ ft_classification:
     #'pretrained_model': 'google/vit-base-patch32-224-in21k' ,
     #'pretrained_model': "facebook/deit-base-distilled-patch16-224",
     #'pretrained_model': "microsoft/swin-base-patch4-window7-224",
-    #'pretrained_model': "microsoft/swinv2-base-patch4-window8-256",
+    #'path': "microsoft/swinv2-base-patch4-window8-256",
+    #'path': "microsoft/swinv2-base-patch4-window8-256",
+    #'path': "google/vit-base-patch16-224"
     #'path': "microsoft/swinv2-large-patch4-window12to16-192to256-22kto1k-ft",
-    'path': "microsoft/swin-large-patch4-window12-384"
-    #'path': "microsoft/swinv2-tiny-patch4-window8-256",
+    #'path': "microsoft/swin-large-patch4-window12-384"
+    'path': "microsoft/swinv2-tiny-patch4-window16-256",
   }
   list_folds: [0] #, 1, 2, 3, 4]
   
@@ -38,8 +40,8 @@ ft_classification:
     #path_data: 'data/images/astromer/alcock/minmax_by_obj_224/100'
     #path_data: data/images/plasticc/minmax_tensors_bands6_grid_224
     #path_data: 'data/images/plasticc/minmax_tensors_bands6_2x1grid_diffColors_256'
-    #path_data: 'data/images/elasticc_1/minmax_by_obj_256'
-    path_data: 'data/images/alcock/20/minmax_by_obj_3.84_m2.0_l0.5'
+    path_data: 'data/images/alcock/20/minmax_by_obj_2.56_m1.0_l1.0_eFalse_overlay'
+    #path_data: 'data/images/alcock/20/minmax_by_obj_3.84_m2.0_l0.5'
     #path_data: 'data/images/plasticc/minmax_by_obj_256_only_test_1391921'
     #path_data: 'data/images/plasticc/minmax_by_obj_256_augdata_oversampling_max_class'
     #path_data: 'data/images/plasticc/minmax_by_obj_256_augdata_oversampling_30000_class'

@@ -18,6 +18,97 @@ from scripts.utils import *
 import warnings
 warnings.filterwarnings('ignore')
 
+def create_overlay_images(obj_df, config, dataset_config):
+    dict_columns = dataset_config['dict_columns']
+    fig_params = config['fig_params']
+
+    fig = plt.figure(figsize=(fig_params['figsize']))
+    ax = fig.add_subplot(1, 1, 1)
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+    for j in range(len(dataset_config['all_bands'])):
+        band_data = obj_df[obj_df[dict_columns['band']] == j]
+
+        if band_data.empty:
+            ax.add_patch(patches.Rectangle((0, 0), 1, 1, color='white', transform=ax.transAxes))
+        else:
+            ax.errorbar(band_data[dict_columns['mjd']], 
+                        band_data[dict_columns['flux']], 
+                        yerr=band_data[dict_columns['flux_err']] if config['use_err'] else None,
+                        color=fig_params['colors'][j],
+                        fmt=fig_params['fmt'], 
+                        alpha=fig_params['alpha'], 
+                        markersize=fig_params['markersize'], 
+                        linewidth=fig_params['linewidth'])
+
+        ax.set_ylim(fig_params['ylim'])
+        ax.axis('off')
+    
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', pad_inches=0)
+    plt.close(fig)
+    buf.seek(0)
+    image = Image.open(buf).convert('RGB')
+    return image
+
+def create_6grid_images(obj_df, config, dataset_config):
+    dict_columns = dataset_config['dict_columns']
+    fig_params = config['fig_params']
+
+    fig, axs = plt.subplots(2, 3, figsize=(fig_params['figsize']))  # Dos filas y tres columnas
+    for j in range(len(dataset_config['all_bands'])):
+        row, col = divmod(j, 3)
+        band_data = obj_df[obj_df[dict_columns['band']] == j]
+
+        if band_data.empty:
+            axs[row, col].add_patch(patches.Rectangle((0, 0), 1, 1, color='white', transform=axs[row, col].transAxes))
+        else:
+            axs[row, col].errorbar(band_data[dict_columns['mjd']], 
+                                   band_data[dict_columns['flux']], 
+                                   yerr=band_data[dict_columns['flux_err']] if config['use_err'] else None,
+                                   color=fig_params['colors'][j],
+                                   fmt=fig_params['fmt'], 
+                                   alpha=fig_params['alpha'], 
+                                   markersize=fig_params['markersize'], 
+                                   linewidth=fig_params['linewidth'])
+
+        axs[row, col].set_ylim(fig_params['ylim'])
+        axs[row, col].axis('off')
+
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0, hspace=0)
+
+    # Agregar rectángulos para las columnas
+    for col in range(3):
+        rect = patches.Rectangle((col/3, 0), 1/3, 1, linewidth=0.3, edgecolor='black', facecolor='none', transform=fig.transFigure)
+        fig.add_artist(rect)
+
+    # Agregar rectángulos para las filas
+    for row in range(2):
+        rect = patches.Rectangle((0, row/2), 1, 0.5, linewidth=0.3, edgecolor='black', facecolor='none', transform=fig.transFigure)
+        fig.add_artist(rect)
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', pad_inches=0)
+    plt.close(fig)
+    buf.seek(0)
+    image = Image.open(buf).convert('RGB')
+    return image
+
+# ELASTICC
+def get_first_last_detection(group):
+    detection_mjd = group[group['PHOTFLAG'].isin([4096, 6144])]['MJD']
+    if not detection_mjd.empty:
+        return pd.Series({
+            'first_detection_mjd': detection_mjd.min(),
+            'last_detection_mjd': detection_mjd.max()
+        })
+    else:
+        return pd.Series({
+            'first_detection_mjd': float('nan'),
+            'last_detection_mjd': float('nan')
+        })
+
+
 def get_plasticc_from_test(dataset_config, fold, subset):
     path_data = dataset_config['path_data']
     path_partition = dataset_config['path_partition']
@@ -134,14 +225,12 @@ def get_elasticc_1(dataset_config, fold, subset):
         class_name = dataset_config['dict_mapping_real_classes'][class_name]
         df = pd.read_parquet(path)
 
-        grouped = df.groupby(snid_name)
-        first_detection_mjd = grouped.apply(lambda x: x[x['PHOTFLAG'].isin([4096, 6144])]['MJD'].min())
-        last_detection_mjd = grouped.apply(lambda x: x[x['PHOTFLAG'].isin([4096, 6144])]['MJD'].max())
-        df['first_detection_mjd'] = df[snid_name].map(first_detection_mjd)
-        df['last_detection_mjd'] = df[snid_name].map(last_detection_mjd)
+        detection_mjd = df.groupby(snid_name).apply(get_first_last_detection)
+        df = df.merge(detection_mjd, left_on=snid_name, right_index=True)
         df = df[(df['MJD'] >= df['first_detection_mjd'] - 30) & 
                 (df['MJD'] <= df['last_detection_mjd'])]
         df = df.drop(columns=['first_detection_mjd', 'last_detection_mjd'])
+        df = df[df['PHOTFLAG'] != 1024]
 
         df_lc.append(df)
         unique_objs = df[snid_name].unique()
@@ -212,34 +301,13 @@ def process_shard(args):
             sample["label.cls"] = label
             
             # Generar la imagen
-            fig_params = config['fig_params']
-            fig = plt.figure(figsize=(fig_params['figsize']))
-            ax = fig.add_subplot(1, 1, 1)
-            plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+            if config['input_type'] == '6grid': 
+                image = create_6grid_images(obj_df, config, dataset_config)
+            elif config['input_type'] == 'overlay':
+                image = create_overlay_images(obj_df, config, dataset_config)
+            else: 
+                raise f"The input_type called: {config['input_type']} is not implemented"
 
-            for j in range(len(dataset_config['all_bands'])):
-                band_data = obj_df[obj_df[dict_columns['band']] == j]
-
-                if band_data.empty:
-                    ax.add_patch(patches.Rectangle((0, 0), 1, 1, color='white', transform=ax.transAxes))
-                else:
-                    ax.errorbar(band_data[dict_columns['mjd']], 
-                                band_data[dict_columns['flux']], 
-                                yerr=band_data[dict_columns['flux_err']] if config['use_err'] else None,
-                                color=fig_params['colors'][j],
-                                fmt=fig_params['fmt'], 
-                                alpha=fig_params['alpha'], 
-                                markersize=fig_params['markersize'], 
-                                linewidth=fig_params['linewidth'])
-
-                ax.set_ylim(fig_params['ylim'])
-                ax.axis('off')
-            
-            buf = io.BytesIO()
-            plt.savefig(buf, format='png', pad_inches=0)
-            plt.close(fig)
-            buf.seek(0)
-            image = Image.open(buf).convert('RGB')
             image_np = np.array(image)
             sample["pixel_values.pth"] = torch.tensor(np.array([image_np]))
 
@@ -267,7 +335,7 @@ def main(config: DictConfig) -> None:
     })
 
     params = config['fig_params']
-    final_folder_name = f"{config['norm_name']}_{params['figsize'][0]}_m{params['markersize']}_l{params['linewidth']}"
+    final_folder_name = f"{config['norm_name']}_{params['figsize'][0]}_m{params['markersize']}_l{params['linewidth']}_{config['input_type']}"
          
     test_fold = 0
     for subset in config['subsets']:
@@ -321,6 +389,9 @@ def main(config: DictConfig) -> None:
                 path_save += f"/fold_{fold}"
             join_shards(source_folder=path_save_tmp,
                         destination_folder=path_save)
+            
+    for clave in ['dict_mapping_real_classes', 'col_metadata']:
+        dataset_config.pop(clave, None)
             
     save_yaml(dataset_config, f"{saved_parent_dir}/{final_folder_name}/data_info.yaml")
 
