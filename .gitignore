@@ -15,3 +15,4 @@ chunk*
 
 errors/
 outputs/
+__pycache__/
