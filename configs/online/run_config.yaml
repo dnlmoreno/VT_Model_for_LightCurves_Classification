@@ -26,9 +26,9 @@ ft_classification:
   # Loaders Configuration
   loader:
     #path_data: 'data/images/alcock/20/minmax_by_obj_2.56_m1.0_l1.0_eFalse_overlay'
-    path_data: 'data/lightcurves/alcock_multiband'
-    #path_data: 'data/lightcurves/elasticc_1'
-    spc: 20
+    #path_data: 'data/lightcurves/alcock_multiband'
+    path_data: 'data/lightcurves/elasticc_1'
+    spc: null
     num_workers: 30
 
   # Training Configuration
@@ -36,9 +36,10 @@ ft_classification:
     lr: 5.0e-5
     patience: 10
     num_epochs: 5
-    batch_size: 64
+    batch_size: 64 # 128 --> 37886 MiB
     use_weighted_sampling: false
     monitor: 'f1/val'
+    cache_enabled: true
 
     classifier: {
       use: true,

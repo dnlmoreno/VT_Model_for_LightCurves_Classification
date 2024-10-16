@@ -21,7 +21,7 @@ CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file_
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib
 
 # --- Set HYDRA variables ---
-export HYDRA_CONFIG_PATH="../configs"
+export HYDRA_CONFIG_PATH="../configs/online"
 export HYDRA_CONFIG_NAME="run_config"
 
 # --- Run the code ---
@@ -31,10 +31,10 @@ srun -n 1 --gres=gpu:1 python -m scripts.run_online \
         ft_classification.loader.path_data='data/lightcurves/elasticc_1' \
         ft_classification.training.batch_size=128 \
         ft_classification.training.lr=5.0e-5 \
-        ft_classification.images_params.input_type='overlay' \
-        ft_classification.images_params.use_err=false \
-        ft_classification.images_params.fig_params.markersize=2.0 \
-        ft_classification.images_params.fig_params.linewidth=1.0 \
-        ft_classification.images_params.fig_params.fmt='-o'
+        ft_classification.imgs_params.input_type='overlay' \
+        ft_classification.imgs_params.use_err=false \
+        ft_classification.imgs_params.fig_params.markersize=2.0 \
+        ft_classification.imgs_params.fig_params.linewidth=1.0 \
+        ft_classification.imgs_params.fig_params.fmt='-o'
 
 

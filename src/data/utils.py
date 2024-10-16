@@ -46,9 +46,6 @@ def get_elasticc_1(path_data, dataset_config):
         df[band_name] = df[band_name].replace(dataset_config['all_bands'])
         df_lc.append(df[filtered_values])
 
-        if i == 1:
-            break
-
     df_lc = pd.concat(df_lc)
     return df_lc
 

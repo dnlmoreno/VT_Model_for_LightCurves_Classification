@@ -15,7 +15,7 @@ from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.loggers import TensorBoardLogger, MLFlowLogger, CSVLogger
 from lightning.pytorch.profilers import PyTorchProfiler
 
-from src.training.callbacks.ModelSummary import ModelSummary
+#from src.training.callbacks.ModelSummary import ModelSummary
 from scripts.predict_clf import predict
 from scripts.utils import *
 
@@ -90,8 +90,8 @@ def perform_ft_classification(run, config, dataset, experiment_name):
         verbose=False,
         mode="min" if 'loss' in monitor else "max",
     )
-    model_summary = ModelSummary(max_depth=10, output_dir=f'{EXPDIR}/model')
-    all_callbacks = [checkpoint, early_stopping, model_summary]
+    #model_summary = ModelSummary(max_depth=10, output_dir=f'{EXPDIR}/model')
+    all_callbacks = [checkpoint, early_stopping] #, model_summary]
 
     # Loggers
     logging.info('📝 Initializing loggers for MLflow and CSV logging.')

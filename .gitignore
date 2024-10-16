@@ -12,3 +12,6 @@ lightning_logs/
 chunk*
 
 *.db
+
+errors/
+outputs/
