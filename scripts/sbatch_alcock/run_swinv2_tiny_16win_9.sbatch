@@ -9,7 +9,7 @@
 #SBATCH -o ./outputs/output_%j.txt      # File to which STDOUT will be written, including job ID
 #SBATCH -e ./errors/errors_%j.txt      # File to which STDERR will be written, including job ID
 #SBATCH  -t 7-00:00       # Time limit in the format hh:mm:ss
-#SBATCH --mem=10GB
+#SBATCH --mem=100GB
 
 # --- Set up software environment ---
 module load python
@@ -33,6 +33,8 @@ srun -n 1 --gres=gpu:1 python -m scripts.run_online \
         ft_classification.training.lr=5.0e-5 \
         ft_classification.imgs_params.input_type='overlay' \
         ft_classification.imgs_params.use_err=false \
-        ft_classification.imgs_params.fig_params.markersize=1.0 \
-        ft_classification.imgs_params.fig_params.linewidth=1.5 \
+        ft_classification.imgs_params.fig_params.markersize=5.0 \
+        ft_classification.imgs_params.fig_params.linewidth=1.0 \
         ft_classification.imgs_params.fig_params.fmt='-o'
+
+

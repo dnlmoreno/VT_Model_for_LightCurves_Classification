@@ -35,11 +35,11 @@ ft_classification:
   training:
     lr: 5.0e-5
     patience: 10
-    num_epochs: 5
-    batch_size: 64 # 128 --> 37886 MiB
+    num_epochs: 10000
+    batch_size: 128 # 128 --> 37886 MiB
     use_weighted_sampling: false
     monitor: 'f1/val'
-    cache_enabled: true
+    cache_enabled: false
 
     classifier: {
       use: true,

@@ -6,6 +6,7 @@ import logging
 import time
 import torch
 import glob
+import gc
 import os
 import io
 
@@ -37,7 +38,7 @@ class LitData(L.LightningDataModule):
             self.partitions = pd.read_parquet(f'{self.path_data}/ATAT_partition/partitions_v1.parquet')
             self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset)
 
-        elif self.name_dataset == 'alcock_multiband':
+        elif self.name_dataset in ['alcock', 'alcock_multiband']:
             self.partitions = pd.read_parquet(f'{self.path_data}/ASTROMER_partition/partitions_v1.parquet')
             self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset)
 
@@ -79,6 +80,7 @@ class LitData(L.LightningDataModule):
 
         logging.info('🧹 Cleaning up the dataset from memory.')
         del self.dataset
+        gc.collect()
         logging.info('🗑️ Dataset cleanup completed.')
 
     def create_weighted_sampler(self, dataset):
@@ -114,8 +116,8 @@ class LitData(L.LightningDataModule):
 
     def get_df_partition(self, subset_name, fold):
         condition = (self.partitions['subset'] == subset_name)
-        if subset_name != 'test' or self.name_dataset in ['alcock_multiband']:
+        if subset_name != 'test' or self.name_dataset in ['alcock', 'alcock_multiband']:
             condition &= (self.partitions['fold'] == fold)
-        if self.spc is not None and self.name_dataset in ['alcock_multiband']:
+        if self.spc is not None and self.name_dataset in ['alcock', 'alcock_multiband']:
             condition &= (self.partitions['spc'] == str(self.spc))
         return self.partitions[condition]

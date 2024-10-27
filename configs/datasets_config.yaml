@@ -199,16 +199,20 @@ elasticc_1:
   ]
 
 alcock:
-  path_data: 'data/lightcurves/astromer'
-  list_spc: ['all'] # [20, 50, 100, 500, 'all'] 
+  #path_data: 'data/lightcurves/alcock/raw'
+  path_partition: 'data/lightcurves/alcock/ASTROMER_partition'
+  list_spc: ['all'] #, 50, 100, 500, 'all'] 
   dict_columns: {
     snid: 'lcid',
     mjd: 'mjd',
-    flux: 'flux',
-    flux_err: 'flux_err',
+    flux: 'mag',
+    flux_err: 'err',
+    band: 'band',
     label: 'label',
   }
-  all_bands: false
+  all_bands: {
+    R: 1, 
+    }
   dict_mapping_classes: {
     Cep_0: 0,  # Cepheid Type I
     Cep_1: 1,  # Cepheid Type II
@@ -219,7 +223,7 @@ alcock:
   }
 
 alcock_multiband:
-  path_data: 'data/lightcurves/alcock/raw'
+  #path_data: 'data/lightcurves/alcock/raw'
   path_partition: 'data/lightcurves/alcock/ASTROMER_partition'
   list_spc: ['all'] #, 50, 100, 500, 'all'] 
   dict_columns: {
@@ -242,7 +246,6 @@ alcock_multiband:
     RRab: 4,   # RR Lyrae Type AB
     RRc: 5,    # RR Lyrae Type C
   }
-
 
 ogle:
   path_data: 'data/lightcurves/astromer'

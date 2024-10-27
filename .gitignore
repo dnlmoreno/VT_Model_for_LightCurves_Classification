@@ -16,3 +16,12 @@ chunk*
 errors/
 outputs/
 __pycache__/
+
+
+mb_2grid_all
+mb_overlay_all
+overlay_20
+overlay_500
+overlay_all
+results_final_1
+results_final

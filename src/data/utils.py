@@ -46,30 +46,33 @@ def get_elasticc_1(path_data, dataset_config):
         df[band_name] = df[band_name].replace(dataset_config['all_bands'])
         df_lc.append(df[filtered_values])
 
+        if i == 5:
+            break
+
     df_lc = pd.concat(df_lc)
     return df_lc
 
 
-def get_alcock_multiband(path_data, dataset_config):
+def get_alcock(path_data, dataset_config, multiband):
     df_lc = []
     lcids_B = set([os.path.splitext(os.path.basename(file))[0] for file in glob.glob(f'{path_data}/raw/B/*')])
     lcids_R = set([os.path.splitext(os.path.basename(file))[0] for file in glob.glob(f'{path_data}/raw/R/*')])
     lcids = list(lcids_B.union(lcids_R))
     for i, lcid in enumerate(lcids, start=1):
-        path_B = f'{path_data}/raw/B/{lcid}.dat'
-        if os.path.exists(path_B) and os.path.getsize(path_B) > 0:
-            df_B = pd.read_csv(path_B)
-            df_B['lcid'] = lcid
-            df_B['band'] = 0
-            df_lc.append(df_B)
-
-        # Verifica si el archivo para la banda R existe antes de cargarlo
         path_R = f'{path_data}/raw/R/{lcid}.dat'
         if os.path.exists(path_R) and os.path.getsize(path_R) > 0:
             df_R = pd.read_csv(path_R)
             df_R['lcid'] = lcid
-            df_R['band'] = 1
+            df_R['band'] = dataset_config['all_bands']['R']
             df_lc.append(df_R)
+
+        if multiband:
+            path_B = f'{path_data}/raw/B/{lcid}.dat'
+            if os.path.exists(path_B) and os.path.getsize(path_B) > 0:
+                df_B = pd.read_csv(path_B)
+                df_B['lcid'] = lcid
+                df_B['band'] = dataset_config['all_bands']['B']
+                df_lc.append(df_B)
 
         if i % 2000 == 0:
             logging.info(f' -→ Opening chunk {i}/{len(lcids)}')
@@ -79,13 +82,14 @@ def get_alcock_multiband(path_data, dataset_config):
     df_lc = df_lc[df_lc['err'] >= 0] 
     return df_lc.reset_index(drop=True)
 
-
 def get_dataset(path_data, dataset_config, name_dataset):
     logging.info('🔄 Data Loading...')
     if name_dataset == 'elasticc_1': 
         df_lc = get_elasticc_1(path_data, dataset_config)
     elif name_dataset == 'alcock_multiband':
-        df_lc = get_alcock_multiband(path_data, dataset_config)
+        df_lc = get_alcock(path_data, dataset_config, multiband=True)
+    elif name_dataset == 'alcock':
+        df_lc = get_alcock(path_data, dataset_config, multiband=False)
     return df_lc
 
 
@@ -99,6 +103,18 @@ def get_normalization(df, norm_name, dict_columns):
         return df.groupby([dict_columns['snid']]).apply(min_max_normalize_lc, dict_columns=dict_columns).reset_index(drop=True)
     else:
         raise 'The selected normalization has not been implemented...'
+
+def create_imgs_dataset(dataset):
+    if self.config['imgs_params']['input_type'] == '2grid': 
+        image = create_2grid_images(obj_lc_df, self.config, self.dataset_config)
+    elif self.config['imgs_params']['input_type'] == '6grid': 
+        image = create_6grid_images(obj_lc_df, self.config, self.dataset_config)
+    elif self.config['imgs_params']['input_type'] == 'overlay':
+        image = create_overlay_images(obj_lc_df, self.config, self.dataset_config, self.name_dataset)
+    else: 
+        raise f"The input_type called: {self.config['imgs_params']['input_type']} is not implemented"
+
+    return dataset
 
 
 def create_2grid_images(obj_df, config, dataset_config):
@@ -143,7 +159,7 @@ def create_2grid_images(obj_df, config, dataset_config):
     image = Image.open(buf).convert('RGB')
     return image
 
-def create_overlay_images(obj_df, config, dataset_config):
+def create_overlay_images(obj_df, config, dataset_config, name_dataset):
     dict_columns = dataset_config['dict_columns']
     fig_params = config['imgs_params']['fig_params']
 
@@ -151,7 +167,7 @@ def create_overlay_images(obj_df, config, dataset_config):
     ax = fig.add_subplot(1, 1, 1)
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
 
-    for j in range(len(dataset_config['all_bands'])):
+    for band_key, j in dataset_config['all_bands'].items():
         band_data = obj_df[obj_df[dict_columns['band']] == j]
 
         if band_data.empty:
@@ -160,7 +176,7 @@ def create_overlay_images(obj_df, config, dataset_config):
             ax.errorbar(band_data[dict_columns['mjd']], 
                         band_data[dict_columns['flux']], 
                         yerr=band_data[dict_columns['flux_err']] if config['imgs_params']['use_err'] else None,
-                        color=fig_params['colors'][j], #[j+2],
+                        color=fig_params['colors'][j] if name_dataset == 'elasticc_1' else fig_params['colors'][j+2],
                         fmt=fig_params['fmt'], 
                         alpha=fig_params['alpha'], 
                         markersize=fig_params['markersize'], 
@@ -181,7 +197,7 @@ def create_6grid_images(obj_df, config, dataset_config):
     fig_params = config['imgs_params']['fig_params']
 
     fig, axs = plt.subplots(2, 3, figsize=(fig_params['figsize']))  # Dos filas y tres columnas
-    for j in range(len(dataset_config['all_bands'])):
+    for band_key, j in dataset_config['all_bands'].items():
         row, col = divmod(j, 3)
         band_data = obj_df[obj_df[dict_columns['band']] == j]
 

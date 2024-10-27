@@ -6,7 +6,9 @@ import logging
 import psutil
 import glob
 import torch
+import sys
 import io
+import os
 
 from PIL import Image
 from joblib import load
@@ -25,26 +27,62 @@ class CustomDataset(torch.utils.data.Dataset):
 
         self.dataset = self.filter_and_normalize_data(dataset)
     
-        self.image_cache = {}
         self.memory_alert_sent = False
         self.cache_enabled = self.config['training'].get('cache_enabled', False)
         if self.cache_enabled:
-            logging.info('🗃️ Cache enabled: Images will be cached in memory.')
-            self.memory_threshold = psutil.virtual_memory().total * 0.90
+            self.image_cache = {}
+            total_memory = self.get_total_memory()
+
+            memory_usage_percentage = 0.90
+
+            self.memory_threshold = total_memory * memory_usage_percentage
+            logging.info(
+                f'🗃️ Cache enabled | Total memory: {total_memory / (1024**3):.2f} GB | '
+                f'Memory threshold: {self.memory_threshold / (1024**3):.2f} GB '
+                f'({memory_usage_percentage * 100:.0f}% of total)'
+            )
+            
+    def get_total_memory(self):
+        """Get the total memory available, considering SLURM allocation if applicable."""
+        slurm_mem = os.getenv('SLURM_MEM_PER_NODE')
+        if slurm_mem:
+            total_memory = int(slurm_mem) * 1024 * 1024  # Convert MB to bytes
+        else:
+            total_memory = psutil.virtual_memory().total  # Fallback to total system memory
+        return total_memory
 
     def check_memory_usage(self):
         """Check if memory usage has exceeded the threshold and log a warning the first time."""
         mem = psutil.virtual_memory()
         if not self.memory_alert_sent and mem.used >= self.memory_threshold:
-            logging.warning(f'⚠️ Memory usage has exceeded {self.memory_threshold / (1024 ** 3):.2f} GB!')
+            logging.warning(f'⚠️ Memory usage has exceeded {self.memory_threshold / (1024**3):.2f} GB!')
             self.memory_alert_sent = True
+            self.log_image_cache_memory()
+
+    def log_image_cache_memory(self):
+        """Log the current memory usage of the image cache."""
+        total_size = self.get_size_of_image_cache()
+        logging.info(f'📦 The image cache is using {total_size / (1024**3):.2f} GB of memory.')
+
+    def get_size_of_image_cache(self):
+        """Recursively calculate the memory size of the image cache."""
+        print(f'Largo: {len(self.image_cache)}')
+        total_size = sys.getsizeof(self.image_cache) 
+        for key, value in self.image_cache.items():
+            total_size += sys.getsizeof(key) 
+            if isinstance(value, torch.Tensor):
+                total_size += value.element_size() * value.numel()
+            else:
+                total_size += sys.getsizeof(value) 
+        return total_size
 
     def __getitem__(self, idx):
         obj_series = self.partition.iloc[idx]
         snid = obj_series[self.dict_cols['snid']]
 
         # Check memory usage before processing
-        self.check_memory_usage()
+        if self.cache_enabled:
+            self.check_memory_usage()
 
         if self.cache_enabled and snid in self.image_cache:
             image = self.image_cache[snid]
@@ -56,7 +94,7 @@ class CustomDataset(torch.utils.data.Dataset):
             elif self.config['imgs_params']['input_type'] == '6grid': 
                 image = create_6grid_images(obj_lc_df, self.config, self.dataset_config)
             elif self.config['imgs_params']['input_type'] == 'overlay':
-                image = create_overlay_images(obj_lc_df, self.config, self.dataset_config)
+                image = create_overlay_images(obj_lc_df, self.config, self.dataset_config, self.name_dataset)
             else: 
                 raise f"The input_type called: {self.config['imgs_params']['input_type']} is not implemented"
 
@@ -88,4 +126,3 @@ class CustomDataset(torch.utils.data.Dataset):
         
         dataset = get_normalization(dataset, self.config['imgs_params']['norm_name'], self.dict_cols)
         return dataset
-
