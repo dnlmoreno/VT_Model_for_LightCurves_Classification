@@ -9,7 +9,7 @@
 #SBATCH -o ./outputs/output_%j.txt      # File to which STDOUT will be written, including job ID
 #SBATCH -e ./errors/errors_%j.txt      # File to which STDERR will be written, including job ID
 #SBATCH  -t 7-00:00       # Time limit in the format hh:mm:ss
-#SBATCH --mem=150GB
+#SBATCH --mem=400GB
 
 # --- Set up software environment ---
 module load python
@@ -29,7 +29,7 @@ srun -n 1 --gres=gpu:1 python -m scripts.run_online \
         ft_classification.model_name='swinv2' \
         ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
         ft_classification.loader.path_data='data/lightcurves/elasticc_1' \
-        ft_classification.training.batch_size=128 \
+        ft_classification.training.batch_size=64 \
         ft_classification.training.lr=5.0e-5 \
         ft_classification.imgs_params.input_type='overlay' \
         ft_classification.imgs_params.use_err=false \

@@ -6,7 +6,7 @@
 #SBATCH -o ./outputs/output_%j.txt  # File to which STDOUT will be written, including job ID
 #SBATCH -e ./errors/errors_%j.txt   # File to which STDERR will be written, including job ID
 #SBATCH -t 7-00:00       # Time limit in the format hh:mm:ss
-#SBATCH --mem=150GB
+#SBATCH --mem=100GB
 
 # --- Set up software environment ---
 module load python
@@ -40,15 +40,15 @@ do
         srun -n 1 --gres=gpu:1 python -m scripts.run_online \
           ft_classification.model_name='swinv2' \
           ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
-          ft_classification.loader.path_data='data/lightcurves/alcock_multiband' \
-          ft_classification.loader.spc=500 \
-          ft_classification.training.batch_size=128 \
+          ft_classification.loader.path_data='data/lightcurves/alcock' \
+          ft_classification.loader.spc='all' \
+          ft_classification.training.batch_size=64 \
           ft_classification.imgs_params.fig_params.markersize=$markersize \
           ft_classification.imgs_params.fig_params.linewidth=$linewidth \
           ft_classification.imgs_params.use_err=$use_err \
           ft_classification.imgs_params.fig_params.fmt='-o' \
           ft_classification.training.lr=$lr \
-          ft_classification.imgs_params.input_type='2grid'
+          ft_classification.imgs_params.input_type='overlay'
           
       done
     done

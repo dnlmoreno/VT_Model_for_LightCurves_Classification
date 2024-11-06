@@ -2,6 +2,7 @@ import multiprocessing as mp
 import webdataset as wds
 import lightning as L
 import pandas as pd
+import numpy as np
 import logging
 import time
 import torch
@@ -15,7 +16,7 @@ from torch.utils.data import DataLoader
 
 from src.data.CustomDataset import CustomDataset
 from scripts.utils import load_yaml
-from src.data.utils import get_dataset
+from src.data.processing.get_data import get_dataset
 
 class LitData(L.LightningDataModule):
     def __init__(self, name_dataset, **kwargs):
@@ -32,56 +33,73 @@ class LitData(L.LightningDataModule):
         self.use_weighted_sampling = self.config['training']['use_weighted_sampling']
 
         self.dataset_config = load_yaml('configs/datasets_config.yaml')[self.name_dataset]
+        self.dict_cols = self.dataset_config['dict_columns']
+
+        self.data_prepared = False
+        self.test_prepared = False
 
     def prepare_data(self):
-        if self.name_dataset == 'elasticc_1':
-            self.partitions = pd.read_parquet(f'{self.path_data}/ATAT_partition/partitions_v1.parquet')
-            self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset)
+        if not self.data_prepared:
+            if self.name_dataset == 'elasticc_1':
+                self.partitions = pd.read_parquet(f'{self.path_data}/ATAT_partition/partitions_v1.parquet')
+                self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset)
 
-        elif self.name_dataset in ['alcock', 'alcock_multiband']:
-            self.partitions = pd.read_parquet(f'{self.path_data}/ASTROMER_partition/partitions_v1.parquet')
-            self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset)
+            elif self.name_dataset in ['alcock', 'alcock_multiband']:
+                self.partitions = pd.read_parquet(f'{self.path_data}/ASTROMER_partition/partitions_v1.parquet')
+                self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset)
 
+            else:
+                raise f"We don't have the implementation for the dataset called {self.name_dataset}"
+
+            self.inv_mapping_classes = {value: key for key, value in self.dataset_config['dict_mapping_classes'].items()} 
+            self.data_prepared = True
         else:
-            raise f"We don't have the implementation for the dataset called {self.name_dataset}"
-
-        self.inv_mapping_classes = {value: key for key, value in self.dataset_config['dict_mapping_classes'].items()} 
+            logging.info('✅ Dataset is already loaded.')
 
     def setup(self, stage=None):
-        logging.info('⚙️ Setting up the training dataset.')
-        self.train_dataset = CustomDataset(
-            dataset=self.dataset,
-            partition=self.get_df_partition('train', self.fold),
-            dataset_config=self.dataset_config,
-            name_dataset=self.name_dataset,
-            config=self.config,
-        )
-        logging.info('✅ Training dataset setup completed.')
+        if stage == 'fit' or stage is None:
+            logging.info('⚙️ Setting up the training dataset.')
+            train_partition = self.get_df_partition('train', self.fold)
+            self.train_dataset = CustomDataset(
+                dataset=self.dataset,
+                partition=train_partition,
+                dataset_config=self.dataset_config,
+                name_dataset=self.name_dataset,
+                config=self.config,
+            )
+            logging.info('✅ Training dataset setup completed.')
 
-        logging.info('⚙️ Setting up the validation dataset.')
-        self.val_dataset = CustomDataset(
-            dataset=self.dataset,
-            partition=self.get_df_partition('val', self.fold),
-            dataset_config=self.dataset_config,
-            name_dataset=self.name_dataset,
-            config=self.config,
-        )
-        logging.info('✅ Validation dataset setup completed.')
+            logging.info('⚙️ Setting up the validation dataset.')
+            val_partition = self.get_df_partition('val', self.fold)
+            self.val_dataset = CustomDataset(
+                dataset=self.dataset,
+                partition=val_partition,
+                dataset_config=self.dataset_config,
+                name_dataset=self.name_dataset,
+                config=self.config,
+            )
+            logging.info('✅ Validation dataset setup completed.')
 
-        logging.info('⚙️ Setting up the test dataset.')
-        self.test_dataset = CustomDataset(
-            dataset=self.dataset,
-            partition=self.get_df_partition('test', self.fold),
-            dataset_config=self.dataset_config,
-            name_dataset=self.name_dataset,
-            config=self.config,
-        )
-        logging.info('✅ Test dataset setup completed.')
+            logging.info('🧹 Releasing memory.')
+            lcids_used = np.hstack([
+                train_partition[self.dict_cols['snid']].values,
+                val_partition[self.dict_cols['snid']].values,
+                ])
+            self.dataset = self.dataset[~self.dataset[self.dict_cols['snid']].isin(lcids_used)]
+            del train_partition, val_partition
+            gc.collect()
 
-        logging.info('🧹 Cleaning up the dataset from memory.')
-        del self.dataset
-        gc.collect()
-        logging.info('🗑️ Dataset cleanup completed.')
+        if (stage == 'test' or stage is None) and not self.test_prepared:
+            logging.info('⚙️ Setting up the test dataset.')
+            self.test_dataset = CustomDataset(
+                dataset=self.dataset,
+                partition=self.get_df_partition('test', self.fold),
+                dataset_config=self.dataset_config,
+                name_dataset=self.name_dataset,
+                config=self.config,
+            )
+            self.test_prepared = True
+            logging.info('✅ Test dataset setup completed.')
 
     def create_weighted_sampler(self, dataset):
         y_true = [sample['y_true'] for sample in dataset]

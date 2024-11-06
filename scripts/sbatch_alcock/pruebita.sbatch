@@ -1,0 +1,36 @@
+#!/bin/bash
+
+#SBATCH -p gpu_requeue      # Partition name
+#SBATCH -c 32
+#SBATCH --gres=gpu:1  # Request to allocate one GPU for this job
+#SBATCH -o ./outputs/output_%j.txt  # File to which STDOUT will be written, including job ID
+#SBATCH -e ./errors/errors_%j.txt   # File to which STDERR will be written, including job ID
+#SBATCH -t 1-00:00       # Time limit in the format hh:mm:ss
+#SBATCH --mem=150GB
+
+# --- Set up software environment ---
+module load python
+module load cudnn/8.9.2.26_cuda12-fasrc01
+
+source ~/.virtualenvs/Visual/bin/activate
+
+CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib
+
+# --- Set HYDRA variables ---
+export HYDRA_CONFIG_PATH="../configs/online"
+export HYDRA_CONFIG_NAME="run_config"
+
+# --- Run the code with current hyperparameters ---
+srun -n 1 --gres=gpu:1 python -m scripts.run_online \
+  ft_classification.model_name='swinv2' \
+  ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
+  ft_classification.loader.path_data='data/lightcurves/alcock_multiband' \
+  ft_classification.loader.spc=20 \
+  ft_classification.training.batch_size=64 \
+  ft_classification.imgs_params.fig_params.markersize=2.0 \
+  ft_classification.imgs_params.fig_params.linewidth=1 \
+  ft_classification.imgs_params.use_err=false \
+  ft_classification.imgs_params.fig_params.fmt='-o' \
+  ft_classification.training.lr=5.0e-5 \
+  ft_classification.imgs_params.input_type='overlay'

@@ -20,6 +20,7 @@ from lightning.pytorch.profilers import PyTorchProfiler
 #from src.training.callbacks.ModelSummary import ModelSummary
 from scripts.predict_clf import predict
 from scripts.utils import *
+from src.data.utils import get_dataset
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -137,7 +138,6 @@ def perform_ft_classification(run, config, dataset, experiment_name):
     # Testing
     try:
         logging.info('🧪 Starting test evaluation.')
-        dataset.setup('test')
         trainer.test(dataloaders=dataset.test_dataloader(), ckpt_path="best")
         logging.info('✅ Test evaluation completed successfully.')
     except Exception as e:
@@ -202,6 +202,53 @@ def run(config: DictConfig) -> None:
     
     # Dataset info
     name_dataset = config['loader']['path_data'].split('/')[2]
+    dataset_config = load_yaml('configs/datasets_config.yaml')[name_dataset]
+    dict_cols = dataset_config['dict_columns']
+
+    path_data = config['loader']['path_data']
+    spc = config['loader'].get('spc', None)
+
+    if name_dataset == 'elasticc_1':
+        partitions = pd.read_parquet(f'{path_data}/ATAT_partition/partitions_v1.parquet')
+        dataset = get_dataset(path_data, dataset_config, name_dataset)
+
+    elif name_dataset in ['alcock', 'alcock_multiband']:
+        partitions = pd.read_parquet(f'{path_data}/ASTROMER_partition/partitions_v1.parquet')
+        dataset = get_dataset(path_data, dataset_config, name_dataset)
+
+    else:
+        raise f"We don't have the implementation for the dataset called {name_dataset}"
+
+    #condition = (partitions['subset'] == subset_name)
+    #if subset_name != 'test' or name_dataset in ['alcock', 'alcock_multiband']:
+    #    condition &= (partitions['fold'] == fold)
+    #if spc is not None and name_dataset in ['alcock', 'alcock_multiband']:
+    #    condition &= (partitions['spc'] == str(spc))
+    #partition = partitions[condition]
+
+    # Generate dataset
+    logging.info(" -→ 🔄 Image generation...")
+    snid_name = dict_cols['snid']
+    lcids = set(partitions[snid_name].unique()) 
+
+    if isinstance(dataset, list):
+        dataset = pd.concat([df[df[snid_name].isin(lcids)] for df in dataset], ignore_index=True)
+    elif isinstance(dataset, pd.DataFrame):
+        dataset = dataset[dataset[snid_name].isin(lcids)]
+    
+    groups = [group for _, group in dataset.groupby(self.dict_cols['snid'])]
+
+    with Pool(processes=self.num_workers) as pool:
+        dataset = list(
+            tqdm(
+                pool.imap(self.normalize_and_create_image, groups), 
+                total=len(groups), 
+                desc="Processing groups")
+                )
+
+    dataset = pd.DataFrame(dataset, columns=['oid', 'image']).set_index('oid')
+    logging.info(' -→ ✅ Image generation setup completed.')
+
 
     # Setup MLflow
     logging.info('⚙️ Setting up MLflow tracking URI and experiment configuration.')

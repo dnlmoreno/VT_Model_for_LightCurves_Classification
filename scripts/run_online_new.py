@@ -33,8 +33,8 @@ else:
     logging.info('⚠️ No GPU available.')
 
 def load_dataset(name_dataset, config):
-    LitData_module = importlib.import_module(f"src.data.LitData")
-    data_module = getattr(LitData_module, 'LitData')(name_dataset, **config)
+    LitData_module = importlib.import_module(f"src.data.LitData_new")
+    data_module = getattr(LitData_module, 'LitData_new')(name_dataset, **config)
     return data_module
 
 def load_model(dataset_config, config):
@@ -137,7 +137,6 @@ def perform_ft_classification(run, config, dataset, experiment_name):
     # Testing
     try:
         logging.info('🧪 Starting test evaluation.')
-        dataset.setup('test')
         trainer.test(dataloaders=dataset.test_dataloader(), ckpt_path="best")
         logging.info('✅ Test evaluation completed successfully.')
     except Exception as e:

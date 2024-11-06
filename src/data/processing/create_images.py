@@ -1,66 +1,117 @@
+import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
+import matplotlib.patches as patches
+import io
 
 from PIL import Image
-import io
-import matplotlib.patches as patches
 
+def create_overlay_images(obj_df, config, dataset_config, name_dataset):
+    dict_columns = dataset_config['dict_columns']
+    fig_params = config['imgs_params']['fig_params']
 
-def create_padding_image(fig_params):
-    plt.figure(figsize=fig_params['figsize'], dpi=100)
-    plt.axis('off')
-    plt.ylim(fig_params['ylim'])
-    plt.tight_layout(pad=0)
+    fig = plt.figure(figsize=(fig_params['figsize']))
+    ax = fig.add_subplot(1, 1, 1)
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+    for band_key, j in dataset_config['all_bands'].items():
+        band_data = obj_df[obj_df[dict_columns['band']] == j]
+
+        if band_data.empty:
+            ax.add_patch(patches.Rectangle((0, 0), 1, 1, color='white', transform=ax.transAxes))
+        else:
+            ax.errorbar(band_data[dict_columns['mjd']], 
+                        band_data[dict_columns['flux']], 
+                        yerr=band_data[dict_columns['flux_err']] if config['imgs_params']['use_err'] else None,
+                        color=fig_params['colors'][j] if name_dataset == 'elasticc_1' else fig_params['colors'][j+2],
+                        fmt=fig_params['fmt'], 
+                        alpha=fig_params['alpha'], 
+                        markersize=fig_params['markersize'], 
+                        linewidth=fig_params['linewidth'])
+
+            #ax.set_xlim(fig_params['xlim'])
+
+        ax.set_ylim(fig_params['ylim'])
+        ax.axis('off')
+    
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=100, bbox_inches='tight', pad_inches=0)
+    plt.savefig(buf, format='png', pad_inches=0)
+    plt.close(fig)
     buf.seek(0)
-    image = Image.open(buf)
-    plt.close()
-    buf.close()
+    image = Image.open(buf).convert('RGB')
     return image
 
 
-def create_single_png_image(data, normalization, fig_params):
-    plt.figure(figsize=fig_params['figsize'], dpi=100)
-    plt.errorbar(data[f"mjd_{normalization['norm_name']}"], 
-                 data[f"flux_{normalization['norm_name']}"],
-                 yerr=data[f"flux_err_{normalization['norm_name']}"] if fig_params['use_err'] else None,
-                 color=fig_params['color'], 
-                 fmt=fig_params['fmt'], 
-                 alpha=fig_params['alpha'], 
-                 markersize=fig_params['markersize'])
-    plt.axis('off')
-    plt.ylim(fig_params['ylim'])
-    plt.tight_layout(pad=0)
+def create_2grid_images(obj_df, config, dataset_config):
+    dict_columns = dataset_config['dict_columns']
+    fig_params = config['imgs_params']['fig_params']
+
+    fig, axs = plt.subplots(2, 1, figsize=(fig_params['figsize']))  # Dos filas y tres columnas
+    for band_key, j in dataset_config['all_bands'].items():
+        #row, col = divmod(j, 2)
+        row = j
+        band_data = obj_df[obj_df[dict_columns['band']] == j]
+
+        if band_data.empty:
+            axs[row].add_patch(patches.Rectangle((0, 0), 1, 1, color='white', transform=axs[row].transAxes))
+        else:
+            axs[row].errorbar(band_data[dict_columns['mjd']], 
+                              band_data[dict_columns['flux']], 
+                              yerr=band_data[dict_columns['flux_err']] if config['imgs_params']['use_err'] else None,
+                              color=fig_params['colors'][j+2],
+                              fmt=fig_params['fmt'], 
+                              alpha=fig_params['alpha'], 
+                              markersize=fig_params['markersize'], 
+                              linewidth=fig_params['linewidth'])
+
+            #axs[row].set_xlim(fig_params['xlim'])
+
+        axs[row].set_ylim(fig_params['ylim'])
+        axs[row].axis('off')
+
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0, hspace=0)
+
+    # Cuadrado grande (borde exterior)
+    rect = patches.Rectangle((0, 0), 1, 1, linewidth=1.5, edgecolor='black', facecolor='none', transform=fig.transFigure)
+    fig.add_artist(rect)
+
+    # Línea entre las filas
+    rect = patches.Rectangle((0, 0.5), 1, 0, linewidth=0.3, edgecolor='black', facecolor='none', transform=fig.transFigure)
+    fig.add_artist(rect)
+
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=100, bbox_inches='tight', pad_inches=0)
+    plt.savefig(buf, format='png', pad_inches=0)
+    plt.close(fig)
     buf.seek(0)
     image = Image.open(buf).convert('RGB')
-    plt.close()
-    buf.close()
-    return image    
+    return image
 
 
-def create_multiBand_grid(df_lc, dict_color_bands, dict_columns):
-    fig, axs = plt.subplots(2, 3, figsize=(2.24, 2.24))  # Dos filas y tres columnas
-    for j, band_key in dict_bands.items():
+def create_6grid_images(obj_df, config, dataset_config):
+    dict_columns = dataset_config['dict_columns']
+    fig_params = config['imgs_params']['fig_params']
+
+    fig, axs = plt.subplots(2, 3, figsize=(fig_params['figsize']))  # Dos filas y tres columnas
+    for band_key, j in dataset_config['all_bands'].items():
         row, col = divmod(j, 3)
-        band_data = obj_df[obj_df['passband'] == j]
+        band_data = obj_df[obj_df[dict_columns['band']] == j]
 
         if band_data.empty:
             axs[row, col].add_patch(patches.Rectangle((0, 0), 1, 1, color='white', transform=axs[row, col].transAxes))
         else:
             axs[row, col].errorbar(band_data[dict_columns['mjd']], 
-                                    band_data[dict_columns['flux']], 
-                                    yerr=band_data[dict_columns['flux_err']] if dict_columns.get('flux_err') else None, 
-                                    color=colors[j],
-                                    fmt='o-', alpha=0.5, markersize=1, linewidth=0.8)
-    
-        if ylim is not None:
-            axs[row, col].set_ylim(ylim)
+                                   band_data[dict_columns['flux']], 
+                                   yerr=band_data[dict_columns['flux_err']] if config['imgs_params']['use_err'] else None,
+                                   color=fig_params['colors'][j],
+                                   fmt=fig_params['fmt'], 
+                                   alpha=fig_params['alpha'], 
+                                   markersize=fig_params['markersize'], 
+                                   linewidth=fig_params['linewidth'])
 
+            axs[row, col].set_xlim(fig_params['xlim'])
+
+        axs[row, col].set_ylim(fig_params['ylim'])
         axs[row, col].axis('off')
-    
+
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0, hspace=0)
 
     # Agregar rectángulos para las columnas
@@ -73,11 +124,9 @@ def create_multiBand_grid(df_lc, dict_color_bands, dict_columns):
         rect = patches.Rectangle((0, row/2), 1, 0.5, linewidth=0.3, edgecolor='black', facecolor='none', transform=fig.transFigure)
         fig.add_artist(rect)
 
-    # Convert the figure to a PNG image in memory
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+    plt.savefig(buf, format='png', pad_inches=0)
     plt.close(fig)
     buf.seek(0)
     image = Image.open(buf).convert('RGB')
-
     return image

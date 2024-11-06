@@ -50,7 +50,7 @@ for i in "${!markersizes[@]}"; do
     ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
     ft_classification.loader.path_data='data/lightcurves/alcock' \
     ft_classification.loader.spc=500 \
-    ft_classification.training.batch_size=128 \
+    ft_classification.training.batch_size=64 \
     ft_classification.imgs_params.fig_params.markersize=$markersize \
     ft_classification.imgs_params.fig_params.linewidth=$linewidth \
     ft_classification.imgs_params.use_err=$use_err \

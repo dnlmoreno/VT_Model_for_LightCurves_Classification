@@ -24,10 +24,9 @@ class LitBaseModel(L.LightningModule, ABC):
         self.save_hyperparameters()
 
         # Hyperparameters
-        #self.name_dataset = len(data_info['dict_mapping_classes'])
         self.num_classes = len(data_info['dict_mapping_classes'])
-        self.num_channels = 3
 
+        self.use_png = kwargs['loader']['use_png']
         self.cfg = kwargs['training']
         self.lr = self.cfg['lr']
         self.cosine_decay = self.cfg.get('cosine_decay')
@@ -35,9 +34,6 @@ class LitBaseModel(L.LightningModule, ABC):
         self.use_metadata = self.cfg['use_metadata'] 
         
         self.loss_fn = F.cross_entropy
-
-        if self.cfg['classifier']['use_plasticc_class_99']: self.num_classes += 1
-        #if self.cfg['classifier']['use_plasticc_loss']: self.loss_fn = WeightedMultiClassLogLoss(self.num_classes, data_info['class_counts'])
 
         if self.use_metadata:
             filter_columns = self.cfg['filter_columns']
@@ -81,6 +77,7 @@ class LitBaseModel(L.LightningModule, ABC):
         y_true = batch_data['y_true'].long()
 
         inputs = self.processor(images=batch_data['pixel_values'],
+                                do_rescale=not self.use_png,
                                 return_tensors="pt").to(device)
         outputs = self.model(**inputs)
         pooled_output = self._get_pooled_output(outputs)
@@ -92,10 +89,6 @@ class LitBaseModel(L.LightningModule, ABC):
         logits = self.classifier(pooled_output)
         y_pred_prob = F.softmax(logits, dim=1)
 
-        # Necesito el valor para plasticc
-        #if isinstance(self.loss_fn, WeightedMultiClassLogLoss):
-        #    loss = self.loss_fn(y_pred_prob, y_true, stage=stage)
-        #else:
         loss = self.loss_fn(logits, y_true)
 
         y_pred = torch.argmax(logits, dim=-1)
