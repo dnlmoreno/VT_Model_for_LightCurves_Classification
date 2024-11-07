@@ -85,7 +85,7 @@ class LitBaseModel(L.LightningModule, ABC):
         if self.use_metadata:
             metadata = torch.from_numpy(self.metadata[self.metadata.index.isin(snids)].values).float().to(device)
             pooled_output = torch.cat((pooled_output, metadata), dim=1)
-            
+
         logits = self.classifier(pooled_output)
         y_pred_prob = F.softmax(logits, dim=1)
 
