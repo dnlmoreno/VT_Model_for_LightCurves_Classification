@@ -10,38 +10,123 @@ import sys
 import io
 import os
 
+#import matplotlib
+#matplotlib.use('Agg') 
+
 from PIL import Image
 from joblib import load
+from torchvision.transforms import v2
 
-from src.data.utils import get_normalization, create_2grid_images, create_6grid_images, create_overlay_images
+from src.data.utils import get_normalization
+from src.data.processing.create_images import create_2grid_images, create_6grid_images, create_overlay_images
 
 class CustomDataset(torch.utils.data.Dataset):
     def __init__(self, dataset, partition, dataset_config, name_dataset, config):
         self.config = config
         self.name_dataset = name_dataset
 
-        self.dataset = dataset
-        self.partition = partition
         self.dataset_config = dataset_config
         self.dict_cols = dataset_config['dict_columns']
+        self.use_png = self.config['loader']['use_png']
+        if self.use_png:
+            self.transform = v2.Compose([
+                v2.ToImage(), 
+                v2.ToDtype(torch.int8, scale=True)
+                ])
 
-        self.dataset = self.filter_and_normalize_data(dataset)
-    
-        self.memory_alert_sent = False
+        self.partition = partition #.set_index(self.dict_cols['snid'])
+        self.dataset = self.filter_and_normalize_data(dataset).set_index(self.dict_cols['snid'])
+
         self.cache_enabled = self.config['training'].get('cache_enabled', False)
         if self.cache_enabled:
             self.image_cache = {}
-            total_memory = self.get_total_memory()
-
-            memory_usage_percentage = 0.90
-
-            self.memory_threshold = total_memory * memory_usage_percentage
-            logging.info(
-                f'🗃️ Cache enabled | Total memory: {total_memory / (1024**3):.2f} GB | '
-                f'Memory threshold: {self.memory_threshold / (1024**3):.2f} GB '
-                f'({memory_usage_percentage * 100:.0f}% of total)'
-            )
             
+    def __getitem__(self, idx):
+        obj_series = self.partition.iloc[idx]
+        snid = obj_series[self.dict_cols['snid']]
+
+        obj_lc_df = self.dataset.loc[snid]
+
+        if self.cache_enabled and snid in self.image_cache:
+            image = self.image_cache[snid]
+        else:
+            image = self.create_image(obj_lc_df)
+
+            if self.cache_enabled:
+                self.image_cache[snid] = image
+
+        if self.use_png:
+            image = self.transform(image)
+
+        sample = {
+            "id": snid,
+            "y_true": obj_series[self.dict_cols['label']],
+            "pixel_values": image
+        }
+
+        return sample
+        
+                
+        # Check memory usage before processing
+        #if self.cache_enabled:
+        #    self.check_memory_usage()
+#
+        #if self.cache_enabled and snid in self.image_cache:
+        #    image = self.image_cache[snid]
+        #else:
+        #    obj_lc_df = self.dataset[self.dataset[self.dict_cols['snid']] == snid]
+#
+        #    if self.config['imgs_params']['input_type'] == '2grid': 
+        #        image = create_2grid_images(obj_lc_df, self.config, self.dataset_config)
+        #    elif self.config['imgs_params']['input_type'] == '6grid': 
+        #        image = create_6grid_images(obj_lc_df, self.config, self.dataset_config)
+        #    elif self.config['imgs_params']['input_type'] == 'overlay':
+        #        image = create_overlay_images(obj_lc_df, self.config, self.dataset_config, self.name_dataset)
+        #    else: 
+        #        raise f"The input_type called: {self.config['imgs_params']['input_type']} is not implemented"
+#
+        #    image = torch.from_numpy(np.array(image))
+#
+        #    if self.cache_enabled:
+        #        if psutil.virtual_memory().used < self.memory_threshold:
+        #            self.image_cache[snid] = image
+#
+        #sample = {
+        #    "id": snid,
+        #    "y_true": obj_series[self.dict_cols['label']],
+        #    "pixel_values": image
+        #}
+#
+        #return sample
+
+    def __len__(self):
+        return self.dataset.index.nunique()
+
+    def filter_and_normalize_data(self, dataset):
+        snid_name = self.dict_cols['snid']
+        lcids = set(self.partition[snid_name].values)
+
+        if isinstance(dataset, list):
+            dataset = pd.concat([df[df[snid_name].isin(lcids)] for df in dataset], ignore_index=True)
+        elif isinstance(dataset, pd.DataFrame):
+            dataset = dataset[dataset[snid_name].isin(lcids)]
+        
+        dataset = get_normalization(dataset, self.config['imgs_params']['norm_name'], self.dict_cols)
+        return dataset
+
+    def create_image(self, group):
+        if self.config['imgs_params']['input_type'] == '2grid': 
+            image = create_2grid_images(group, self.config, self.dataset_config)
+        elif self.config['imgs_params']['input_type'] == '6grid': 
+            image = create_6grid_images(group, self.config, self.dataset_config)
+        elif self.config['imgs_params']['input_type'] == 'overlay':
+            image = create_overlay_images(group, self.config, self.dataset_config, self.name_dataset)
+        else: 
+            raise f"The input_type called: {self.config['imgs_params']['input_type']} is not implemented"
+
+        return image if self.use_png else torch.from_numpy(np.array(image))
+
+
     def get_total_memory(self):
         """Get the total memory available, considering SLURM allocation if applicable."""
         slurm_mem = os.getenv('SLURM_MEM_PER_NODE')
@@ -75,54 +160,3 @@ class CustomDataset(torch.utils.data.Dataset):
             else:
                 total_size += sys.getsizeof(value) 
         return total_size
-
-    def __getitem__(self, idx):
-        obj_series = self.partition.iloc[idx]
-        snid = obj_series[self.dict_cols['snid']]
-
-        # Check memory usage before processing
-        if self.cache_enabled:
-            self.check_memory_usage()
-
-        if self.cache_enabled and snid in self.image_cache:
-            image = self.image_cache[snid]
-        else:
-            obj_lc_df = self.dataset[self.dataset[self.dict_cols['snid']] == snid]
-
-            if self.config['imgs_params']['input_type'] == '2grid': 
-                image = create_2grid_images(obj_lc_df, self.config, self.dataset_config)
-            elif self.config['imgs_params']['input_type'] == '6grid': 
-                image = create_6grid_images(obj_lc_df, self.config, self.dataset_config)
-            elif self.config['imgs_params']['input_type'] == 'overlay':
-                image = create_overlay_images(obj_lc_df, self.config, self.dataset_config, self.name_dataset)
-            else: 
-                raise f"The input_type called: {self.config['imgs_params']['input_type']} is not implemented"
-
-            image = torch.tensor(np.array(image))
-
-            if self.cache_enabled:
-                if psutil.virtual_memory().used < self.memory_threshold:
-                    self.image_cache[snid] = image
-
-        sample = {
-            "id": snid,
-            "y_true": obj_series[self.dict_cols['label']],
-            "pixel_values": image
-        }
-
-        return sample
-
-    def __len__(self):
-        return self.dataset[self.dict_cols['snid']].nunique()
-
-    def filter_and_normalize_data(self, dataset):
-        snid_name = self.dict_cols['snid']
-        lcids = set(self.partition[snid_name].values) 
-
-        if isinstance(dataset, list):
-            dataset = pd.concat([df[df[snid_name].isin(lcids)] for df in dataset], ignore_index=True)
-        elif isinstance(dataset, pd.DataFrame):
-            dataset = dataset[dataset[snid_name].isin(lcids)]
-        
-        dataset = get_normalization(dataset, self.config['imgs_params']['norm_name'], self.dict_cols)
-        return dataset

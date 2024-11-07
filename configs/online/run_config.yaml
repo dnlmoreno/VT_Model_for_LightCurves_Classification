@@ -28,7 +28,7 @@ ft_classification:
     path_data: 'data/lightcurves/elasticc_1'
     spc: null
     num_workers: 15
-    use_png: true
+    use_png: false
 
   # Training Configuration
   training:
@@ -49,7 +49,7 @@ ft_classification:
   
   imgs_params:
     norm_name: 'minmax_by_obj'
-    input_type: 'overlay'  # '2grid', 'overlay', '6grid' 
+    input_type: '6grid'  # '2grid', 'overlay', '6grid' 
     use_err: false
 
     fig_params: {

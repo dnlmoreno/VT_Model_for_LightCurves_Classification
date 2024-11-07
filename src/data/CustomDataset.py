@@ -1,3 +1,4 @@
+
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -16,7 +17,7 @@ import os
 #matplotlib.use('Agg') 
 
 from torchvision.transforms import v2
-#from multiprocessing import Pool, cpu_count
+import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 from PIL import Image
@@ -72,33 +73,15 @@ class CustomDataset(torch.utils.data.Dataset):
 
         groups = [group for _, group in dataset.groupby(snid_name)]
         
-        with ThreadPoolExecutor(max_workers=int(self.num_workers*1.5)) as executor:
-            dataset = list(tqdm(
-                executor.map(self.normalize_and_create_image_with_retry, groups), 
-                total=len(groups), 
-                desc="Processing groups",
-                mininterval=60,
-                file=sys.stdout
-                ))
-            executor.shutdown(wait=True)
+        dataset = []
+        for group in tqdm(groups, desc="Processing groups", mininterval=10, file=sys.stdout):
+            result = self.normalize_and_create_image(group)
+            dataset.append(result)
 
         dataset = pd.DataFrame(dataset, columns=[snid_name, 'image', self.dict_cols['label']])
         logging.info(' -→ Image generation completed.')
 
         return dataset
-
-    def normalize_and_create_image_with_retry(self, group, max_retries=10):
-        attempt = 0
-        while attempt < max_retries:
-            try:
-                return self.normalize_and_create_image(group)
-            except Exception as e:
-                attempt += 1
-                logging.error(f"Error processing group on attempt {attempt}: {e}")
-                time.sleep(1) 
-                if attempt == max_retries:
-                    logging.error(f"Max retries reached for group. We finished the program. Increase the max_retries count.")
-                    exit()
 
     def normalize_and_create_image(self, group):
         for col in [self.dict_cols['flux'], self.dict_cols['flux_err'], self.dict_cols['mjd']]:
@@ -118,5 +101,5 @@ class CustomDataset(torch.utils.data.Dataset):
             image = create_overlay_images(group, self.config, self.dataset_config, self.name_dataset)
         else: 
             raise f"The input_type called: {self.config['imgs_params']['input_type']} is not implemented"
-        
+
         return image if self.use_png else torch.from_numpy(np.array(image))

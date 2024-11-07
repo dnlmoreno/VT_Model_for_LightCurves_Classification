@@ -28,7 +28,7 @@ def create_overlay_images(obj_df, config, dataset_config, name_dataset):
                         markersize=fig_params['markersize'], 
                         linewidth=fig_params['linewidth'])
 
-            #ax.set_xlim(fig_params['xlim'])
+            ax.set_xlim(fig_params['xlim'])
 
         ax.set_ylim(fig_params['ylim'])
         ax.axis('off')
@@ -63,7 +63,7 @@ def create_2grid_images(obj_df, config, dataset_config):
                               markersize=fig_params['markersize'], 
                               linewidth=fig_params['linewidth'])
 
-            #axs[row].set_xlim(fig_params['xlim'])
+            axs[row].set_xlim(fig_params['xlim'])
 
         axs[row].set_ylim(fig_params['ylim'])
         axs[row].axis('off')
