@@ -85,7 +85,11 @@ class CustomDataset_test(torch.utils.data.Dataset):
             dataset = dataset[dataset[snid_name].isin(lcids)]
         
         self.partition = self.partition[self.partition[snid_name].isin(dataset[snid_name].unique())]
-        dataset = get_normalization(dataset.groupby([snid_name]), self.config['imgs_params']['norm_name'], self.dict_cols)
+        dataset = [
+            get_normalization(group, self.config['imgs_params']['norm_name'], self.dict_cols)
+            for _, group in dataset.groupby(snid_name)
+        ]
+        dataset = pd.concat(dataset, ignore_index=True)
         return dataset
 
     def create_image(self, group):

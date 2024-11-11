@@ -14,7 +14,10 @@ def create_overlay_images(obj_df, config, dataset_config, name_dataset):
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
 
     for band_key, j in dataset_config['all_bands'].items():
-        band_data = obj_df[obj_df[dict_columns['band']] == j]
+        try:
+            band_data = obj_df[obj_df[dict_columns['band']] == j]
+        except:
+            band_data = pd.DataFrame()
 
         if band_data.empty:
             ax.add_patch(patches.Rectangle((0, 0), 1, 1, color='white', transform=ax.transAxes))
@@ -47,9 +50,11 @@ def create_2grid_images(obj_df, config, dataset_config):
 
     fig, axs = plt.subplots(2, 1, figsize=(fig_params['figsize']))  # Dos filas y tres columnas
     for band_key, j in dataset_config['all_bands'].items():
-        #row, col = divmod(j, 2)
         row = j
-        band_data = obj_df[obj_df[dict_columns['band']] == j]
+        try:
+            band_data = obj_df[obj_df[dict_columns['band']] == j]
+        except:
+            band_data = pd.DataFrame()
 
         if band_data.empty:
             axs[row].add_patch(patches.Rectangle((0, 0), 1, 1, color='white', transform=axs[row].transAxes))

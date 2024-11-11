@@ -19,6 +19,7 @@ def min_max_normalize_lc(group, dict_columns):
 
 def get_normalization(group, norm_name, dict_columns):
     if norm_name == 'minmax_by_obj':
-        return group.apply(min_max_normalize_lc, dict_columns=dict_columns).reset_index(drop=True)
+        return min_max_normalize_lc(group, dict_columns).reset_index(drop=True)
     else:
         raise 'The selected normalization has not been implemented...'
+        
