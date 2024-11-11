@@ -27,6 +27,7 @@ class LitData(L.LightningDataModule):
         self.path_data = self.config['loader']['path_data']
         self.spc = self.config['loader'].get('spc', None)
         self.num_workers = self.config['loader']['num_workers']
+        self.debug = self.config['debug']
 
         self.batch_size = self.config['training']['batch_size']
         self.fold = self.config['loader']['fold']
@@ -42,11 +43,11 @@ class LitData(L.LightningDataModule):
         if not self.data_prepared:
             if self.name_dataset == 'elasticc_1':
                 self.partitions = pd.read_parquet(f'{self.path_data}/ATAT_partition/partitions_v1.parquet')
-                self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset)
+                self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset, self.debug)
 
             elif self.name_dataset in ['alcock', 'alcock_multiband']:
                 self.partitions = pd.read_parquet(f'{self.path_data}/ASTROMER_partition/partitions_v1.parquet')
-                self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset)
+                self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset, self.debug)
 
             else:
                 raise f"We don't have the implementation for the dataset called {self.name_dataset}"

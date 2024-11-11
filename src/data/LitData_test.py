@@ -14,11 +14,11 @@ import io
 from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import DataLoader
 
-from src.data.CustomDataset import CustomDataset
+from src.data.CustomDataset_test import CustomDataset_test
 from scripts.utils import load_yaml
 from src.data.processing.get_data import get_dataset
 
-class LitData(L.LightningDataModule):
+class LitData_test(L.LightningDataModule):
     def __init__(self, name_dataset, **kwargs):
         super().__init__()
 
@@ -27,6 +27,7 @@ class LitData(L.LightningDataModule):
         self.path_data = self.config['loader']['path_data']
         self.spc = self.config['loader'].get('spc', None)
         self.num_workers = self.config['loader']['num_workers']
+        self.debug = self.config['debug']
 
         self.batch_size = self.config['training']['batch_size']
         self.fold = self.config['loader']['fold']
@@ -42,11 +43,11 @@ class LitData(L.LightningDataModule):
         if not self.data_prepared:
             if self.name_dataset == 'elasticc_1':
                 self.partitions = pd.read_parquet(f'{self.path_data}/ATAT_partition/partitions_v1.parquet')
-                self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset)
+                self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset, self.debug)
 
             elif self.name_dataset in ['alcock', 'alcock_multiband']:
                 self.partitions = pd.read_parquet(f'{self.path_data}/ASTROMER_partition/partitions_v1.parquet')
-                self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset)
+                self.dataset = get_dataset(self.path_data, self.dataset_config, self.name_dataset, self.debug)
 
             else:
                 raise f"We don't have the implementation for the dataset called {self.name_dataset}"
@@ -60,7 +61,7 @@ class LitData(L.LightningDataModule):
         if stage == 'fit' or stage is None:
             logging.info('⚙️ Setting up the training dataset.')
             train_partition = self.get_df_partition('train', self.fold)
-            self.train_dataset = CustomDataset(
+            self.train_dataset = CustomDataset_test(
                 dataset=self.dataset,
                 partition=train_partition,
                 dataset_config=self.dataset_config,
@@ -71,7 +72,7 @@ class LitData(L.LightningDataModule):
 
             logging.info('⚙️ Setting up the validation dataset.')
             val_partition = self.get_df_partition('val', self.fold)
-            self.val_dataset = CustomDataset(
+            self.val_dataset = CustomDataset_test(
                 dataset=self.dataset,
                 partition=val_partition,
                 dataset_config=self.dataset_config,
@@ -80,18 +81,22 @@ class LitData(L.LightningDataModule):
             )
             logging.info('✅ Validation dataset setup completed.')
 
-            #logging.info('🧹 Releasing memory.')
-            #lcids_used = np.hstack([
-            #    train_partition[self.dict_cols['snid']].values,
-            #    val_partition[self.dict_cols['snid']].values,
-            #    ])
-            #self.dataset = self.dataset[~self.dataset[self.dict_cols['snid']].isin(lcids_used)]
-            #del train_partition, val_partition
-            #gc.collect()
+            logging.info('🧹 Releasing memory.')
+            snid_name = self.dict_cols['snid']
+            lcids_used = np.hstack([
+                train_partition[snid_name].values,
+                val_partition[snid_name].values,
+                ])
+            if isinstance(self.dataset, list):
+                self.dataset = [df[~df[snid_name].isin(lcids_used)] for df in self.dataset]
+            elif isinstance(self.dataset, pd.DataFrame):
+                self.dataset = self.dataset[~self.dataset[snid_name].isin(lcids_used)]
+            del train_partition, val_partition
+            gc.collect()
 
         if (stage == 'test' or stage is None) and not self.test_prepared:
             logging.info('⚙️ Setting up the test dataset.')
-            self.test_dataset = CustomDataset(
+            self.test_dataset = CustomDataset_test(
                 dataset=self.dataset,
                 partition=self.get_df_partition('test', self.fold),
                 dataset_config=self.dataset_config,

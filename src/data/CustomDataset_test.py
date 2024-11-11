@@ -20,7 +20,11 @@ from torchvision.transforms import v2
 from src.data.utils import get_normalization
 from src.data.processing.create_images import create_2grid_images, create_6grid_images, create_overlay_images
 
-class CustomDataset(torch.utils.data.Dataset):
+#from multiprocessing import Manager
+import torch.multiprocessing as mp
+#mp.set_start_method('spawn', force=True)
+
+class CustomDataset_test(torch.utils.data.Dataset):
     def __init__(self, dataset, partition, dataset_config, name_dataset, config):
         self.config = config
         self.name_dataset = name_dataset
@@ -34,26 +38,28 @@ class CustomDataset(torch.utils.data.Dataset):
                 v2.ToDtype(torch.int8, scale=True)
                 ])
 
-        self.partition = partition #.set_index(self.dict_cols['snid'])
+        self.partition = partition
         self.dataset = self.filter_and_normalize_data(dataset).set_index(self.dict_cols['snid'])
 
         self.cache_enabled = self.config['training'].get('cache_enabled', False)
+        self.first_epoch = True
         if self.cache_enabled:
-            self.image_cache = {}
-            
+            manager = mp.Manager()
+            #manager = Manager()
+            self.image_cache = manager.dict()
+
     def __getitem__(self, idx):
         obj_series = self.partition.iloc[idx]
         snid = obj_series[self.dict_cols['snid']]
 
         obj_lc_df = self.dataset.loc[snid]
 
-        if self.cache_enabled and snid in self.image_cache:
-            image = self.image_cache[snid]
-        else:
+        if self.first_epoch and self.cache_enabled:
             image = self.create_image(obj_lc_df)
-
-            if self.cache_enabled:
-                self.image_cache[snid] = image
+            self.image_cache[snid] = image
+        else:
+            #image = self.image_cache.loc[snid, 'image']
+            image = self.image_cache[snid]
 
         if self.use_png:
             image = self.transform(image)
@@ -66,39 +72,6 @@ class CustomDataset(torch.utils.data.Dataset):
 
         return sample
         
-                
-        # Check memory usage before processing
-        #if self.cache_enabled:
-        #    self.check_memory_usage()
-#
-        #if self.cache_enabled and snid in self.image_cache:
-        #    image = self.image_cache[snid]
-        #else:
-        #    obj_lc_df = self.dataset[self.dataset[self.dict_cols['snid']] == snid]
-#
-        #    if self.config['imgs_params']['input_type'] == '2grid': 
-        #        image = create_2grid_images(obj_lc_df, self.config, self.dataset_config)
-        #    elif self.config['imgs_params']['input_type'] == '6grid': 
-        #        image = create_6grid_images(obj_lc_df, self.config, self.dataset_config)
-        #    elif self.config['imgs_params']['input_type'] == 'overlay':
-        #        image = create_overlay_images(obj_lc_df, self.config, self.dataset_config, self.name_dataset)
-        #    else: 
-        #        raise f"The input_type called: {self.config['imgs_params']['input_type']} is not implemented"
-#
-        #    image = torch.from_numpy(np.array(image))
-#
-        #    if self.cache_enabled:
-        #        if psutil.virtual_memory().used < self.memory_threshold:
-        #            self.image_cache[snid] = image
-#
-        #sample = {
-        #    "id": snid,
-        #    "y_true": obj_series[self.dict_cols['label']],
-        #    "pixel_values": image
-        #}
-#
-        #return sample
-
     def __len__(self):
         return self.dataset.index.nunique()
 
@@ -111,7 +84,8 @@ class CustomDataset(torch.utils.data.Dataset):
         elif isinstance(dataset, pd.DataFrame):
             dataset = dataset[dataset[snid_name].isin(lcids)]
         
-        dataset = get_normalization(dataset, self.config['imgs_params']['norm_name'], self.dict_cols)
+        self.partition = self.partition[self.partition[snid_name].isin(dataset[snid_name].unique())]
+        dataset = get_normalization(dataset.groupby([snid_name]), self.config['imgs_params']['norm_name'], self.dict_cols)
         return dataset
 
     def create_image(self, group):

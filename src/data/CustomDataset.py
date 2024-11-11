@@ -73,13 +73,13 @@ class CustomDataset(torch.utils.data.Dataset):
 
         groups = [group for _, group in dataset.groupby(snid_name)]
         
-        #dataset = []
-        #for group in tqdm(groups, desc="Processing groups", mininterval=10, file=sys.stdout):
-        #    result = self.normalize_and_create_image(group)
-        #    dataset.append(result)
+        dataset = []
+        for group in tqdm(groups, desc="Processing groups", mininterval=10, file=sys.stdout):
+            result = self.normalize_and_create_image(group)
+            dataset.append(result)
 
-        with multiprocessing.Pool(processes=self.num_workers) as pool:
-            dataset = list(tqdm(pool.imap(self.normalize_and_create_image, groups), total=len(groups), desc="Processing groups"))
+        #with multiprocessing.Pool(processes=self.num_workers) as pool:
+        #    dataset = list(tqdm(pool.imap(self.normalize_and_create_image, groups), total=len(groups), desc="Processing groups"))
 
         dataset = pd.DataFrame(dataset, columns=[snid_name, 'image', self.dict_cols['label']])
         logging.info(' -→ Image generation completed.')
@@ -87,9 +87,7 @@ class CustomDataset(torch.utils.data.Dataset):
         return dataset
 
     def normalize_and_create_image(self, group):
-        for col in [self.dict_cols['flux'], self.dict_cols['flux_err'], self.dict_cols['mjd']]:
-            group[col] = (group[col] - group[col].min()) / (group[col].max() - group[col].min())
-
+        group = get_normalization(group, self.config['imgs_params']['norm_name'], self.dict_cols)
         snid = group[self.dict_cols['snid']].iloc[0]
         image = self.create_image(group)
         label = self.partition.loc[snid, self.dict_cols['label']]

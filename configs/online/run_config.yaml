@@ -38,7 +38,7 @@ ft_classification:
     batch_size: 64
     use_weighted_sampling: false
     monitor: 'f1/val'
-    cache_enabled: false
+    cache_enabled: true
 
     classifier: {
       use: true,

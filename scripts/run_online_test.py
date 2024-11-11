@@ -33,8 +33,8 @@ else:
     logging.info('⚠️ No GPU available.')
 
 def load_dataset(name_dataset, config):
-    LitData_module = importlib.import_module(f"src.data.LitData_new")
-    data_module = getattr(LitData_module, 'LitData_new')(name_dataset, **config)
+    LitData_module = importlib.import_module(f"src.data.LitData_test")
+    data_module = getattr(LitData_module, 'LitData_test')(name_dataset, **config)
     return data_module
 
 def load_model(dataset_config, config):
@@ -114,7 +114,7 @@ def perform_ft_classification(run, config, dataset, experiment_name):
     # If debugging
     if config['debug']:
         logging.warning('⚠️ Debug mode enabled: Running only one epoch.')
-        max_epochs = 1
+        max_epochs = 2
     else:
         max_epochs = config['training']['num_epochs']
 

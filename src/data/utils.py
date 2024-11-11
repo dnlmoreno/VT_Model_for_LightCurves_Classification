@@ -1,12 +1,24 @@
 import pandas as pd
 
 def min_max_normalize_lc(group, dict_columns):
-    for col in [dict_columns['flux'], dict_columns['flux_err'], dict_columns['mjd']]:
-        group[col] = (group[col] - group[col].min()) / (group[col].max() - group[col].min())
+    flux_min = group[dict_columns['flux']].min()
+    flux_max = group[dict_columns['flux']].max()
+    flux_range = flux_max - flux_min
+
+    group[dict_columns['flux']] = (group[dict_columns['flux']] - flux_min) / flux_range
+    group[dict_columns['flux_err']] = group[dict_columns['flux_err']] / flux_range
+
+    mjd_min = group[dict_columns['mjd']].min()
+    mjd_max = group[dict_columns['mjd']].max()
+    mjd_range = mjd_max - mjd_min
+
+    group[dict_columns['mjd']] = (group[dict_columns['mjd']] - mjd_min) / mjd_range
+
     return group
 
-def get_normalization(df, norm_name, dict_columns):
+
+def get_normalization(group, norm_name, dict_columns):
     if norm_name == 'minmax_by_obj':
-        return df.groupby([dict_columns['snid']]).apply(min_max_normalize_lc, dict_columns=dict_columns).reset_index(drop=True)
+        return group.apply(min_max_normalize_lc, dict_columns=dict_columns).reset_index(drop=True)
     else:
         raise 'The selected normalization has not been implemented...'

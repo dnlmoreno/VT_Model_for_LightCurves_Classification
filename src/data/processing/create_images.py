@@ -93,7 +93,10 @@ def create_6grid_images(obj_df, config, dataset_config):
     fig, axs = plt.subplots(2, 3, figsize=(fig_params['figsize']))  # Dos filas y tres columnas
     for band_key, j in dataset_config['all_bands'].items():
         row, col = divmod(j, 3)
-        band_data = obj_df[obj_df[dict_columns['band']] == j]
+        try:
+            band_data = obj_df[obj_df[dict_columns['band']] == j]
+        except:
+            band_data = pd.DataFrame()
 
         if band_data.empty:
             axs[row, col].add_patch(patches.Rectangle((0, 0), 1, 1, color='white', transform=axs[row, col].transAxes))

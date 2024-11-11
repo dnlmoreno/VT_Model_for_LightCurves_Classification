@@ -16,7 +16,7 @@ def get_first_last_detection(group):
             'last_detection_mjd': float('nan')
         })
 
-def get_elasticc_1(path_data, dataset_config):
+def get_elasticc_1(path_data, dataset_config, debug):
     snid_name = dataset_config['dict_columns']['snid']
     mjd_name = dataset_config['dict_columns']['mjd']
     band_name = dataset_config['dict_columns']['band']
@@ -41,10 +41,13 @@ def get_elasticc_1(path_data, dataset_config):
         df[band_name] = df[band_name].replace(dataset_config['all_bands'])
         df_lc.append(df[filtered_values])
 
+        if debug:
+            if i == 1: break
+
     return df_lc
 
 
-def get_alcock(path_data, dataset_config, multiband):
+def get_alcock(path_data, dataset_config, multiband, debug):
     df_lc = []
     lcids_B = set([os.path.splitext(os.path.basename(file))[0] for file in glob.glob(f'{path_data}/raw/B/*')])
     lcids_R = set([os.path.splitext(os.path.basename(file))[0] for file in glob.glob(f'{path_data}/raw/R/*')])
@@ -65,8 +68,8 @@ def get_alcock(path_data, dataset_config, multiband):
                 df_B['band'] = dataset_config['all_bands']['B']
                 df_lc.append(df_B)
 
-        #if i == 10:
-        #    break
+        if debug:
+            if i == 10: break
 
         if i % 2000 == 0:
             logging.info(f' -→ Opening chunk {i}/{len(lcids)}')
@@ -76,12 +79,12 @@ def get_alcock(path_data, dataset_config, multiband):
     df_lc = df_lc[df_lc['err'] >= 0] 
     return df_lc.reset_index(drop=True)
 
-def get_dataset(path_data, dataset_config, name_dataset):
+def get_dataset(path_data, dataset_config, name_dataset, debug):
     logging.info('🔄 Data Loading...')
     if name_dataset == 'elasticc_1': 
-        df_lc = get_elasticc_1(path_data, dataset_config)
+        df_lc = get_elasticc_1(path_data, dataset_config, debug=debug)
     elif name_dataset == 'alcock_multiband':
-        df_lc = get_alcock(path_data, dataset_config, multiband=True)
+        df_lc = get_alcock(path_data, dataset_config, multiband=True, debug=debug)
     elif name_dataset == 'alcock':
-        df_lc = get_alcock(path_data, dataset_config, multiband=False)
+        df_lc = get_alcock(path_data, dataset_config, multiband=False, debug=debug)
     return df_lc
