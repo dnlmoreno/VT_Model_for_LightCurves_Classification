@@ -69,7 +69,7 @@ def get_alcock(path_data, dataset_config, multiband, debug):
                 df_lc.append(df_B)
 
         if debug:
-            if i == 10: break
+            if i == 2000: break
 
         if i % 2000 == 0:
             logging.info(f' -→ Opening chunk {i}/{len(lcids)}')

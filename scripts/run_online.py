@@ -154,25 +154,6 @@ def perform_ft_classification(run, config, dataset, experiment_name):
     ##loaded_model = model.load_from_checkpoint(checkpoint.best_model_path).eval()
     #_ = predict(dataset, best_model, path_save_metrics)
     
-    # --- Transfer to remote server and delete local files ---
-    #remote_user = "dmoreno2016"  # Replace with your username on the remote server
-    #remote_server = "pececillo.inf.udec.cl"  # Replace with your remote server address
-    #remote_path = "/home/shared/daniel_results_tmp/hp_tuning"  # Replace with the path to save on the remote server
-    #RUN_DIR = f"{config['results_dir']}/ml-runs/{experiment_id}/{run_id}"
-#
-    #try:
-    #    logging.info(f'🔄 Transferring experiment files to {remote_server}')
-    #    scp_command = f"scp -r {RUN_DIR} {remote_user}@{remote_server}:{remote_path}"
-    #    subprocess.run(scp_command, shell=True, check=True)
-    #    
-    #    logging.info(f'✅ Files successfully transferred to {remote_server}. Now deleting local files.')
-    #    shutil.rmtree(RUN_DIR)  # Delete the local directory after successful transfer
-    #    logging.info(f'🗑️ Local files deleted: {RUN_DIR}')
-    #    
-    #except Exception as e:
-    #    logging.error(f'❌ Failed to transfer files to {remote_server}. Local files were not deleted.')
-    #    logging.exception(e)
-
     # --- Eliminar el archivo de checkpoint ---
     try:
         checkpoint_file = sorted(glob.glob(f'{EXPDIR}/model/my_best_checkpoint-*.ckpt'))[-1]  # Buscar el último archivo de checkpoint

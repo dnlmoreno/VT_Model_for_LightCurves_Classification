@@ -58,7 +58,10 @@ class CustomDataset_test(torch.utils.data.Dataset):
             image = self.create_image(obj_df)
             self.image_cache[snid] = image
         else:
-            image = self.image_cache.get(snid, self.create_image(obj_df))
+            if self.cache_enabled:
+                image = self.image_cache[snid]
+            else:
+                image = self.create_image(obj_df)
 
         if self.use_png:
             image = self.transform(image)
