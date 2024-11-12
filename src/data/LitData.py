@@ -81,14 +81,12 @@ class LitData(L.LightningDataModule):
             )
             logging.info('✅ Validation dataset setup completed.')
 
-            logging.info('🧹 Releasing memory.')
+            snid_name = self.dict_cols['snid']
             lcids_used = np.hstack([
-                train_partition[self.dict_cols['snid']].values,
-                val_partition[self.dict_cols['snid']].values,
-                ])
-            self.dataset = self.dataset[~self.dataset[self.dict_cols['snid']].isin(lcids_used)]
-            del train_partition, val_partition
-            gc.collect()
+                train_partition[snid_name].values,
+                val_partition[snid_name].values,
+            ])
+            self.release_memory(lcids_used, snid_name)
 
         if (stage == 'test' or stage is None) and not self.test_prepared:
             logging.info('⚙️ Setting up the test dataset.')
@@ -140,3 +138,13 @@ class LitData(L.LightningDataModule):
         if self.spc is not None and self.name_dataset in ['alcock', 'alcock_multiband']:
             condition &= (self.partitions['spc'] == str(self.spc))
         return self.partitions[condition]
+
+    def release_memory(self, lcids_used, snid_name):
+        """Método para liberar memoria después de configurar los datasets."""
+        logging.info('🧹 Releasing memory.')
+        if isinstance(self.dataset, list):
+            self.dataset = [df[~df[snid_name].isin(lcids_used)] for df in self.dataset]
+        elif isinstance(self.dataset, pd.DataFrame):
+            self.dataset = self.dataset[~self.dataset[snid_name].isin(lcids_used)]
+        gc.collect()
+        logging.info('✅ Memory released successfully.')

@@ -9,6 +9,7 @@ class EpochUpdate(Callback):
             train_dataloader = trainer.datamodule.train_dataloader()
             train_dataset = train_dataloader.dataset
             train_dataset.first_epoch = False
+            #train_dataset.image_cache = dict(train_dataset.image_cache)
             #train_dataset.image_cache = pd.DataFrame({
             #    "snid": train_dataset.image_cache.keys(),
             #    "image": train_dataset.image_cache.values()
@@ -17,6 +18,7 @@ class EpochUpdate(Callback):
             val_dataloader = trainer.datamodule.val_dataloader()
             val_dataset = val_dataloader.dataset
             val_dataset.first_epoch = False
+            #val_dataset.image_cache = dict(val_dataset.image_cache)
             #val_dataset.image_cache = pd.DataFrame({
             #    "snid": val_dataset.image_cache.keys(),
             #    "image": val_dataset.image_cache.values()

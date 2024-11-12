@@ -18,6 +18,7 @@ from lightning.pytorch.loggers import TensorBoardLogger, MLFlowLogger, CSVLogger
 from lightning.pytorch.profilers import PyTorchProfiler
 
 #from src.training.callbacks.ModelSummary import ModelSummary
+from src.training.callbacks.EpochUpdate import EpochUpdate
 from scripts.predict_clf import predict
 from scripts.utils import *
 
@@ -92,8 +93,9 @@ def perform_ft_classification(run, config, dataset, experiment_name):
         verbose=False,
         mode="min" if 'loss' in monitor else "max",
     )
+    epoch_update = EpochUpdate()
     #model_summary = ModelSummary(max_depth=10, output_dir=f'{EXPDIR}/model')
-    all_callbacks = [checkpoint, early_stopping] #, model_summary]
+    all_callbacks = [checkpoint, early_stopping, epoch_update] #, model_summary]
 
     # Loggers
     logging.info('📝 Initializing loggers for MLflow and CSV logging.')
@@ -114,7 +116,7 @@ def perform_ft_classification(run, config, dataset, experiment_name):
     # If debugging
     if config['debug']:
         logging.warning('⚠️ Debug mode enabled: Running only one epoch.')
-        max_epochs = 2
+        max_epochs = 3
     else:
         max_epochs = config['training']['num_epochs']
 
@@ -137,6 +139,7 @@ def perform_ft_classification(run, config, dataset, experiment_name):
     # Testing
     try:
         logging.info('🧪 Starting test evaluation.')
+        dataset.setup('test')
         trainer.test(dataloaders=dataset.test_dataloader(), ckpt_path="best")
         logging.info('✅ Test evaluation completed successfully.')
     except Exception as e:

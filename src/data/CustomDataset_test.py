@@ -31,6 +31,8 @@ class CustomDataset_test(torch.utils.data.Dataset):
 
         self.dataset_config = dataset_config
         self.dict_cols = dataset_config['dict_columns']
+        self.snid_name = self.dict_cols['snid']
+        self.label_name = self.dict_cols['label']
         self.use_png = self.config['loader']['use_png']
         if self.use_png:
             self.transform = v2.Compose([
@@ -38,58 +40,55 @@ class CustomDataset_test(torch.utils.data.Dataset):
                 v2.ToDtype(torch.int8, scale=True)
                 ])
 
-        self.partition = partition
-        self.dataset = self.filter_and_normalize_data(dataset).set_index(self.dict_cols['snid'])
+        self.partition = partition.set_index(self.snid_name)
+        self.dataset = self.filter_and_normalize_data(dataset)
 
         self.cache_enabled = self.config['training'].get('cache_enabled', False)
         self.first_epoch = True
         if self.cache_enabled:
             manager = mp.Manager()
-            #manager = Manager()
             self.image_cache = manager.dict()
+        else:
+            self.image_cache = {}
 
     def __getitem__(self, idx):
-        obj_series = self.partition.iloc[idx]
-        snid = obj_series[self.dict_cols['snid']]
-
-        obj_lc_df = self.dataset.loc[snid]
-
+        snid, obj_df, label = self.dataset[idx]
+                
         if self.first_epoch and self.cache_enabled:
-            image = self.create_image(obj_lc_df)
+            image = self.create_image(obj_df)
             self.image_cache[snid] = image
         else:
-            #image = self.image_cache.loc[snid, 'image']
-            image = self.image_cache[snid]
+            image = self.image_cache.get(snid, self.create_image(obj_df))
 
         if self.use_png:
             image = self.transform(image)
 
         sample = {
             "id": snid,
-            "y_true": obj_series[self.dict_cols['label']],
+            "y_true": label,
             "pixel_values": image
         }
 
         return sample
         
     def __len__(self):
-        return self.dataset.index.nunique()
+        return len(self.dataset)
 
     def filter_and_normalize_data(self, dataset):
-        snid_name = self.dict_cols['snid']
-        lcids = set(self.partition[snid_name].values)
+        lcids = set(self.partition.index.values)
 
         if isinstance(dataset, list):
-            dataset = pd.concat([df[df[snid_name].isin(lcids)] for df in dataset], ignore_index=True)
+            dataset = pd.concat([df[df[self.snid_name].isin(lcids)] for df in dataset], ignore_index=True)
         elif isinstance(dataset, pd.DataFrame):
-            dataset = dataset[dataset[snid_name].isin(lcids)]
+            dataset = dataset[dataset[self.snid_name].isin(lcids)]
         
-        self.partition = self.partition[self.partition[snid_name].isin(dataset[snid_name].unique())]
-        dataset = [
-            get_normalization(group, self.config['imgs_params']['norm_name'], self.dict_cols)
-            for _, group in dataset.groupby(snid_name)
+        dataset = [(
+            snid, 
+            get_normalization(group, self.config['imgs_params']['norm_name'], self.dict_cols), 
+            self.partition.loc[snid, self.label_name]
+            )
+            for snid, group in dataset.groupby(self.snid_name)
         ]
-        dataset = pd.concat(dataset, ignore_index=True)
         return dataset
 
     def create_image(self, group):

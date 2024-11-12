@@ -8,7 +8,7 @@
 #SBATCH  --gres=gpu:nvidia_a100-sxm4-80gb:1          # Request to allocate one GPU for this job
 #SBATCH -o ./outputs/output_%j.txt      # File to which STDOUT will be written, including job ID
 #SBATCH -e ./errors/errors_%j.txt      # File to which STDERR will be written, including job ID
-#SBATCH  -t 7-00:00       # Time limit in the format hh:mm:ss
+#SBATCH  -t 1-00:00       # Time limit in the format hh:mm:ss
 #SBATCH --mem=100GB
 
 # --- Set up software environment ---
@@ -25,11 +25,11 @@ export HYDRA_CONFIG_PATH="../configs/online"
 export HYDRA_CONFIG_NAME="run_config"
 
 # --- Run the code ---
-srun -n 1 --gres=gpu:1 python -m scripts.run_online \
+srun -n 1 --gres=gpu:1 python -m scripts.run_online_test \
         ft_classification.model_name='swinv2' \
         ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
         ft_classification.loader.path_data='data/lightcurves/elasticc_1' \
-        ft_classification.loader.use_png=true \
+        ft_classification.loader.use_png=false \
         ft_classification.training.batch_size=64 \
         ft_classification.training.lr=5.0e-5 \
         ft_classification.imgs_params.input_type='overlay' \

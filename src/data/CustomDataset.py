@@ -33,6 +33,8 @@ class CustomDataset(torch.utils.data.Dataset):
 
         self.dataset_config = dataset_config
         self.dict_cols = dataset_config['dict_columns']
+        self.snid_name = self.dict_cols['snid']
+        self.label_name = self.dict_cols['label']
         self.num_workers = self.config['loader']['num_workers']
         self.use_png = self.config['loader']['use_png']
         if self.use_png:
@@ -41,7 +43,7 @@ class CustomDataset(torch.utils.data.Dataset):
                 v2.ToDtype(torch.int8, scale=True)
                 ])
 
-        self.partition = partition.set_index(self.dict_cols['snid'])
+        self.partition = partition.set_index(self.snid_name)
         self.dataset = self.generate_image_dataset(dataset)
             
     def __getitem__(self, idx):
@@ -52,8 +54,8 @@ class CustomDataset(torch.utils.data.Dataset):
             image = self.transform(image)
 
         sample = {
-            "id": obj_series[self.dict_cols['snid']],
-            "y_true": obj_series[self.dict_cols['label']],
+            "id": obj_series[self.snid_name],
+            "y_true": obj_series[self.label_name],
             "pixel_values": image 
         }
         return sample
@@ -63,34 +65,41 @@ class CustomDataset(torch.utils.data.Dataset):
 
     def generate_image_dataset(self, dataset):
         logging.info(" -→ Image generation...")
-        snid_name = self.dict_cols['snid']
+        self.snid_name = self.snid_name
         lcids = set(self.partition.index.values)
 
         if isinstance(dataset, list):
-            dataset = pd.concat([df[df[snid_name].isin(lcids)] for df in dataset], ignore_index=True)
+            dataset = pd.concat([df[df[self.snid_name].isin(lcids)] for df in dataset], ignore_index=True)
         elif isinstance(dataset, pd.DataFrame):
-            dataset = dataset[dataset[snid_name].isin(lcids)]
+            dataset = dataset[dataset[self.snid_name].isin(lcids)]
 
-        groups = [group for _, group in dataset.groupby(snid_name)]
-        
-        dataset = []
-        for group in tqdm(groups, desc="Processing groups", mininterval=10, file=sys.stdout):
-            result = self.normalize_and_create_image(group)
-            dataset.append(result)
+        dataset = [
+            self.normalize_and_create_image(group)
+            for _, group in tqdm(dataset.groupby(self.snid_name), 
+                                 desc="Processing groups", 
+                                 mininterval=10, 
+                                 file=sys.stdout)
+        ]
+        #groups = [group for _, group in dataset.groupby(self.snid_name)]
+        #
+        #dataset = []
+        #for group in tqdm(groups, desc="Processing groups", mininterval=10, file=sys.stdout):
+        #    result = self.normalize_and_create_image(group)
+        #    dataset.append(result)
 
         #with multiprocessing.Pool(processes=self.num_workers) as pool:
         #    dataset = list(tqdm(pool.imap(self.normalize_and_create_image, groups), total=len(groups), desc="Processing groups"))
 
-        dataset = pd.DataFrame(dataset, columns=[snid_name, 'image', self.dict_cols['label']])
+        dataset = pd.DataFrame(dataset, columns=[self.snid_name, 'image', self.label_name])
         logging.info(' -→ Image generation completed.')
 
         return dataset
 
     def normalize_and_create_image(self, group):
         group = get_normalization(group, self.config['imgs_params']['norm_name'], self.dict_cols)
-        snid = group[self.dict_cols['snid']].iloc[0]
+        snid = group[self.snid_name].iloc[0]
         image = self.create_image(group)
-        label = self.partition.loc[snid, self.dict_cols['label']]
+        label = self.partition.loc[snid, self.label_name]
         return snid, image, label
 
     def create_image(self, group):

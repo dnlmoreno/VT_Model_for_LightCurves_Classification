@@ -8,7 +8,7 @@
 #SBATCH  --gres=gpu:nvidia_a100-sxm4-80gb:1          # Request to allocate one GPU for this job
 #SBATCH -o ./outputs/output_%j.txt      # File to which STDOUT will be written, including job ID
 #SBATCH -e ./errors/errors_%j.txt      # File to which STDERR will be written, including job ID
-#SBATCH  -t 7-00:00       # Time limit in the format hh:mm:ss
+#SBATCH  -t 1-00:00       # Time limit in the format hh:mm:ss
 #SBATCH --mem=100GB
 
 # --- Set up software environment ---
