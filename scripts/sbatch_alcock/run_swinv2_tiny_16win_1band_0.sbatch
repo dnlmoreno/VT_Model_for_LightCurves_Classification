@@ -48,7 +48,8 @@ do
           ft_classification.imgs_params.use_err=$use_err \
           ft_classification.imgs_params.fig_params.fmt='-o' \
           ft_classification.training.lr=$lr \
-          ft_classification.imgs_params.input_type='overlay'
+          ft_classification.imgs_params.input_type='overlay' \
+          ft_classification.is_searching_hyperparameters=true
           
       done
     done

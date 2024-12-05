@@ -146,23 +146,24 @@ def perform_ft_classification(run, config, dataset, experiment_name):
 
     path_save_metrics = f'{EXPDIR}/metrics'
     os.makedirs(path_save_metrics, exist_ok=True)
-
-    #ckpt_dir = handle_ckpt_dir(config, fold=config['loader']['fold'])
-    #ckpt_model = sorted(glob.glob(ckpt_dir + "/*.ckpt"))[-1]
-    #best_model = load_checkpoint(model, ckpt_model)   
-    #print(type(best_model))  
-    ##loaded_model = model.load_from_checkpoint(checkpoint.best_model_path).eval()
-    #_ = predict(dataset, best_model, path_save_metrics)
     
     # --- Eliminar el archivo de checkpoint ---
-    try:
-        checkpoint_file = sorted(glob.glob(f'{EXPDIR}/model/my_best_checkpoint-*.ckpt'))[-1]  # Buscar el último archivo de checkpoint
-        if os.path.exists(checkpoint_file):
-            os.remove(checkpoint_file)
-            logging.info(f'🗑️ Checkpoint file deleted: {checkpoint_file}')
-    except Exception as e:
-        logging.error('❌ Failed to delete checkpoint file.')
-        logging.exception(e)
+    if is_searching_hyperparameters:
+        try:
+            checkpoint_file = sorted(glob.glob(f'{EXPDIR}/model/my_best_checkpoint-*.ckpt'))[-1]  # Buscar el último archivo de checkpoint
+            if os.path.exists(checkpoint_file):
+                os.remove(checkpoint_file)
+                logging.info(f'🗑️ Checkpoint file deleted: {checkpoint_file}')
+        except Exception as e:
+            logging.error('❌ Failed to delete checkpoint file.')
+            logging.exception(e)
+
+    #else:
+    #    ckpt_dir = handle_ckpt_dir(config, fold=config['loader']['fold'])
+    #    ckpt_model = sorted(glob.glob(ckpt_dir + "/*.ckpt"))[-1]
+    #    best_model = load_checkpoint(model, ckpt_model)   
+    #    #loaded_model = model.load_from_checkpoint(checkpoint.best_model_path).eval()
+    #    _ = predict(dataset, best_model, path_save_metrics)
 
 
 @hydra.main(config_path=os.getenv("HYDRA_CONFIG_PATH", "../configs/online"),

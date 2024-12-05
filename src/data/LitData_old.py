@@ -14,11 +14,11 @@ import io
 from torch.utils.data import WeightedRandomSampler
 from torch.utils.data import DataLoader
 
-from src.data.CustomDataset_test import CustomDataset_test
+from src.data.CustomDataset import CustomDataset
 from scripts.utils import load_yaml
 from src.data.processing.get_data import get_dataset
 
-class LitData_test(L.LightningDataModule):
+class LitData(L.LightningDataModule):
     def __init__(self, name_dataset, **kwargs):
         super().__init__()
 
@@ -61,7 +61,7 @@ class LitData_test(L.LightningDataModule):
         if stage == 'fit' or stage is None:
             logging.info('⚙️ Setting up the training dataset.')
             train_partition = self.get_df_partition('train', self.fold)
-            self.train_dataset = CustomDataset_test(
+            self.train_dataset = CustomDataset(
                 dataset=self.dataset,
                 partition=train_partition,
                 dataset_config=self.dataset_config,
@@ -72,7 +72,7 @@ class LitData_test(L.LightningDataModule):
 
             logging.info('⚙️ Setting up the validation dataset.')
             val_partition = self.get_df_partition('val', self.fold)
-            self.val_dataset = CustomDataset_test(
+            self.val_dataset = CustomDataset(
                 dataset=self.dataset,
                 partition=val_partition,
                 dataset_config=self.dataset_config,
@@ -90,7 +90,7 @@ class LitData_test(L.LightningDataModule):
 
         if (stage == 'test' or stage is None) and not self.test_prepared:
             logging.info('⚙️ Setting up the test dataset.')
-            self.test_dataset = CustomDataset_test(
+            self.test_dataset = CustomDataset(
                 dataset=self.dataset,
                 partition=self.get_df_partition('test', self.fold),
                 dataset_config=self.dataset_config,

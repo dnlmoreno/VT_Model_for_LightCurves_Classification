@@ -22,6 +22,7 @@ ft_classification:
   
   # General Configuration
   debug: false
+  is_searching_hyperparameters: false
 
   # Loaders Configuration
   loader:
