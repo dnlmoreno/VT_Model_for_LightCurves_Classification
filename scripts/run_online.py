@@ -148,7 +148,7 @@ def perform_ft_classification(run, config, dataset, experiment_name):
     os.makedirs(path_save_metrics, exist_ok=True)
     
     # --- Eliminar el archivo de checkpoint ---
-    if is_searching_hyperparameters:
+    if config['is_searching_hyperparameters']:
         try:
             checkpoint_file = sorted(glob.glob(f'{EXPDIR}/model/my_best_checkpoint-*.ckpt'))[-1]  # Buscar el último archivo de checkpoint
             if os.path.exists(checkpoint_file):
@@ -183,7 +183,7 @@ def run(config: DictConfig) -> None:
                           f"{config['imgs_params']['input_type']}"
     
     # Dataset info
-    name_dataset = config['loader']['path_data'].split('/')[2]
+    name_dataset = config['loader']['name_dataset']
 
     # Setup MLflow
     logging.info('⚙️ Setting up MLflow tracking URI and experiment configuration.')

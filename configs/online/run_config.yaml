@@ -26,7 +26,8 @@ ft_classification:
 
   # Loaders Configuration
   loader:
-    path_data: 'data/lightcurves/elasticc_1'
+    name_dataset: 'elasticc_1'
+    #path_data: 'data/lightcurves/elasticc_1'
     spc: null
     num_workers: 15
     use_png: false

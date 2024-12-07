@@ -16,7 +16,8 @@ def get_first_last_detection(group):
             'last_detection_mjd': float('nan')
         })
 
-def get_elasticc_1(path_data, dataset_config, debug):
+def get_elasticc_1(dataset_config, debug):
+    data_dir = dataset_config['data_dir']
     snid_name = dataset_config['dict_columns']['snid']
     mjd_name = dataset_config['dict_columns']['mjd']
     band_name = dataset_config['dict_columns']['band']
@@ -24,7 +25,7 @@ def get_elasticc_1(path_data, dataset_config, debug):
     filtered_values = [value for key, value in dataset_config['dict_columns'].items() if key != label_name]
 
     df_lc = []
-    path_chunks = glob.glob(f'{path_data}/raw/lc_*')
+    path_chunks = glob.glob(f'{data_dir}/lc_*')
     for i, path in enumerate(path_chunks):
         logging.info(f' -→ Opening chunk {i + 1:02}/{len(path_chunks)}')
         class_name = path.split('/')[-1].split('.')[0].split('lc_')[-1]
@@ -47,13 +48,14 @@ def get_elasticc_1(path_data, dataset_config, debug):
     return df_lc
 
 
-def get_alcock(path_data, dataset_config, multiband, debug):
+def get_alcock(dataset_config, multiband, debug):
+    data_dir = dataset_config['data_dir']
     df_lc = []
-    lcids_B = set([os.path.splitext(os.path.basename(file))[0] for file in glob.glob(f'{path_data}/raw/B/*')])
-    lcids_R = set([os.path.splitext(os.path.basename(file))[0] for file in glob.glob(f'{path_data}/raw/R/*')])
+    lcids_B = set([os.path.splitext(os.path.basename(file))[0] for file in glob.glob(f'{data_dir}/B/*')])
+    lcids_R = set([os.path.splitext(os.path.basename(file))[0] for file in glob.glob(f'{data_dir}/R/*')])
     lcids = list(lcids_B.union(lcids_R))
     for i, lcid in enumerate(lcids, start=1):
-        path_R = f'{path_data}/raw/R/{lcid}.dat'
+        path_R = f'{data_dir}/R/{lcid}.dat'
         if os.path.exists(path_R) and os.path.getsize(path_R) > 0:
             df_R = pd.read_csv(path_R)
             df_R['lcid'] = lcid
@@ -61,7 +63,7 @@ def get_alcock(path_data, dataset_config, multiband, debug):
             df_lc.append(df_R)
 
         if multiband:
-            path_B = f'{path_data}/raw/B/{lcid}.dat'
+            path_B = f'{data_dir}/B/{lcid}.dat'
             if os.path.exists(path_B) and os.path.getsize(path_B) > 0:
                 df_B = pd.read_csv(path_B)
                 df_B['lcid'] = lcid
@@ -79,12 +81,12 @@ def get_alcock(path_data, dataset_config, multiband, debug):
     df_lc = df_lc[df_lc['err'] >= 0] 
     return df_lc.reset_index(drop=True)
 
-def get_dataset(path_data, dataset_config, name_dataset, debug):
+def get_dataset(dataset_config, name_dataset, debug):
     logging.info('🔄 Data Loading...')
     if name_dataset == 'elasticc_1': 
-        df_lc = get_elasticc_1(path_data, dataset_config, debug=debug)
+        df_lc = get_elasticc_1(dataset_config, debug=debug)
     elif name_dataset == 'alcock_multiband':
-        df_lc = get_alcock(path_data, dataset_config, multiband=True, debug=debug)
+        df_lc = get_alcock(dataset_config, multiband=True, debug=debug)
     elif name_dataset == 'alcock':
-        df_lc = get_alcock(path_data, dataset_config, multiband=False, debug=debug)
+        df_lc = get_alcock(dataset_config, multiband=False, debug=debug)
     return df_lc

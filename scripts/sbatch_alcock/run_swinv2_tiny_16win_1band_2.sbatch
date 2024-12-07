@@ -12,7 +12,7 @@
 module load python
 module load cudnn/8.9.2.26_cuda12-fasrc01
 
-source ~/.virtualenvs/Visual/bin/activate
+source ~/envs/VisionTrans/bin/activate
 
 CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib
@@ -40,7 +40,7 @@ do
         srun -n 1 --gres=gpu:1 python -m scripts.run_online \
           ft_classification.model_name='swinv2' \
           ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
-          ft_classification.loader.path_data='data/lightcurves/alcock' \
+          ft_classification.loader.name_dataset='alcock' \
           ft_classification.loader.spc='all' \
           ft_classification.training.batch_size=64 \
           ft_classification.imgs_params.fig_params.markersize=$markersize \

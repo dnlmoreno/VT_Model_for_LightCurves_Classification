@@ -24,7 +24,7 @@ from src.data.processing.create_images import create_2grid_images, create_6grid_
 import torch.multiprocessing as mp
 #mp.set_start_method('spawn', force=True)
 
-class CustomDataset_test(torch.utils.data.Dataset):
+class CustomDataset(torch.utils.data.Dataset):
     def __init__(self, dataset, partition, dataset_config, name_dataset, config):
         self.config = config
         self.name_dataset = name_dataset
@@ -45,23 +45,24 @@ class CustomDataset_test(torch.utils.data.Dataset):
 
         self.cache_enabled = self.config['training'].get('cache_enabled', False)
         self.first_epoch = True
-        if self.cache_enabled:
-            manager = mp.Manager()
-            self.image_cache = manager.dict()
-        else:
-            self.image_cache = {}
+        #if self.cache_enabled:
+        #    manager = mp.Manager()
+        #    self.image_cache = manager.dict()
+        #else:
+        #    self.image_cache = {}
 
     def __getitem__(self, idx):
         snid, obj_df, label = self.dataset[idx]
+        image = self.create_image(obj_df)
                 
-        if self.first_epoch and self.cache_enabled:
-            image = self.create_image(obj_df)
-            self.image_cache[snid] = image
-        else:
-            if self.cache_enabled:
-                image = self.image_cache[snid]
-            else:
-                image = self.create_image(obj_df)
+        #if self.first_epoch and self.cache_enabled:
+        #    image = self.create_image(obj_df)
+        #    self.image_cache[snid] = image
+        #else:
+        #    if self.cache_enabled:
+        #        image = self.image_cache[snid]
+        #    else:
+        #        image = self.create_image(obj_df)
 
         if self.use_png:
             image = self.transform(image)

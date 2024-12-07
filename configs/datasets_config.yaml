@@ -57,8 +57,8 @@ plasticc:
   }
 
 elasticc_1:
-  path_data: 'data/lightcurves/elasticc_1/raw'
-  path_partition: 'data/lightcurves/elasticc_1/ATAT_partition'
+  data_dir: 'data/lightcurves/elasticc_1/raw'
+  path_partition: 'data/lightcurves/elasticc_1/ATAT_partition/partitions_v1.parquet'
   dict_columns: {
     snid: 'SNID',
     mjd: 'MJD',
@@ -199,9 +199,8 @@ elasticc_1:
   ]
 
 alcock:
-  #path_data: 'data/lightcurves/alcock/raw'
-  path_partition: 'data/lightcurves/alcock/ASTROMER_partition'
-  list_spc: ['all'] #, 50, 100, 500, 'all'] 
+  data_dir: 'data/lightcurves/alcock/raw'
+  path_partition: 'data/lightcurves/alcock/ASTROMER_partition/partitions_v1.parquet'
   dict_columns: {
     snid: 'lcid',
     mjd: 'mjd',
@@ -223,9 +222,8 @@ alcock:
   }
 
 alcock_multiband:
-  #path_data: 'data/lightcurves/alcock/raw'
-  path_partition: 'data/lightcurves/alcock/ASTROMER_partition'
-  list_spc: ['all'] #, 50, 100, 500, 'all'] 
+  data_dir: 'data/lightcurves/alcock/raw'
+  path_partition: 'data/lightcurves/alcock/ASTROMER_partition/partitions_v1.parquet'
   dict_columns: {
     snid: 'lcid',
     mjd: 'mjd',
