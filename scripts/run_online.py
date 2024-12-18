@@ -146,6 +146,11 @@ def perform_ft_classification(run, config, dataset, experiment_name):
 
     path_save_metrics = f'{EXPDIR}/metrics'
     os.makedirs(path_save_metrics, exist_ok=True)
+
+    model_name = config['model_name']
+    LitModel_module = importlib.import_module(f"src.models.LitModels.{model_name}")
+    loaded_model = getattr(LitModel_module, 'LitModel').load_from_checkpoint(checkpoint.best_model_path).eval()  
+    _ = predict(dataset, loaded_model, path_save_metrics)
     
     # --- Eliminar el archivo de checkpoint ---
     if config['is_searching_hyperparameters']:
@@ -158,13 +163,6 @@ def perform_ft_classification(run, config, dataset, experiment_name):
             logging.error('❌ Failed to delete checkpoint file.')
             logging.exception(e)
 
-    #else:
-    #    ckpt_dir = handle_ckpt_dir(config, fold=config['loader']['fold'])
-    #    ckpt_model = sorted(glob.glob(ckpt_dir + "/*.ckpt"))[-1]
-    #    best_model = load_checkpoint(model, ckpt_model)   
-    #    #loaded_model = model.load_from_checkpoint(checkpoint.best_model_path).eval()
-    #    _ = predict(dataset, best_model, path_save_metrics)
-
 
 @hydra.main(config_path=os.getenv("HYDRA_CONFIG_PATH", "../configs/online"),
             config_name=os.getenv("HYDRA_CONFIG_NAME", "run_config"), 
@@ -173,7 +171,14 @@ def perform_ft_classification(run, config, dataset, experiment_name):
 def run(config: DictConfig) -> None:
     config = OmegaConf.to_container(config, resolve=True, throw_on_missing=True)
     config = config['ft_classification']
+
+    # Handling list_folds
     list_folds = config.pop('list_folds')
+    if isinstance(list_folds, str):
+        try:
+            list_folds = json.loads(list_folds)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Error al decodificar list_folds: {list_folds}") from e
 
     config['hp_tuning'] = f"{config['imgs_params']['norm_name']}_" \
                           f"{config['imgs_params']['fig_params']['figsize'][0]}_" \
@@ -188,7 +193,8 @@ def run(config: DictConfig) -> None:
     # Setup MLflow
     logging.info('⚙️ Setting up MLflow tracking URI and experiment configuration.')
     mlflow.set_tracking_uri(f"file:{config['results_dir']}/ml-runs")
-    experiment_name = f"ft_classification/{name_dataset}/testing"
+    experiment_phase = "testing" if config['is_searching_hyperparameters'] else "best_params"
+    experiment_name = f"ft_classification/{name_dataset}/{experiment_phase}"
     mlflow.set_experiment(experiment_name)
 
     config['run_name'] = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

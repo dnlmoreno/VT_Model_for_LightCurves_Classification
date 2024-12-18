@@ -8,6 +8,7 @@ from typing import Optional
 from lightning.pytorch import LightningDataModule, LightningModule
 from sklearn.metrics import f1_score
 
+from src.data.ClassOrder import ClassOrder
 from scripts.utils import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -20,7 +21,7 @@ def predict(dataset: LightningDataModule,
     batches_output = trainer.predict(loaded_model, dataloaders=dataset.predict_dataloader())
 
     # Handling output
-    sort_name_classes = list(sort_dict_by_value(dataset.dict_mapping_classes).values())
+    sort_name_classes = list(sort_dict_by_value(dataset.inv_mapping_classes).values())
     df_list = [batch_to_df(batch, sort_name_classes) for batch in batches_output]
     df_proba = pd.concat(df_list, ignore_index=True)
 
@@ -39,7 +40,7 @@ def predict(dataset: LightningDataModule,
             file.write(dict_metrics)
 
         # Save confusion matrix
-        order_classes = sorted(dataset.dict_mapping_classes.values())
+        order_classes = ClassOrder.get_order(name_dataset=dataset.name_dataset)
 
         single_confusion_matrix(y_true=df_proba['y_true'], 
                                 y_pred=df_proba['y_pred'], 

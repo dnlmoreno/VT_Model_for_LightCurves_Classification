@@ -5,6 +5,7 @@ import torch.optim as optim
 import torch.nn as nn
 import torchmetrics
 import torch
+import gc
 
 import pandas as pd
 

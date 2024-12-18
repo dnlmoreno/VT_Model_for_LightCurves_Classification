@@ -198,9 +198,9 @@ elasticc_1:
     'REDSHIFT_HELIO_ERR'
   ]
 
-alcock:
-  data_dir: 'data/lightcurves/alcock/raw'
-  path_partition: 'data/lightcurves/alcock/ASTROMER_partition/partitions_v1.parquet'
+macho:
+  data_dir: 'data/lightcurves/macho/raw'
+  path_partition: 'data/lightcurves/macho/ASTROMER_partition/partitions_v1.parquet'
   dict_columns: {
     snid: 'lcid',
     mjd: 'mjd',
@@ -221,9 +221,9 @@ alcock:
     RRc: 5,    # RR Lyrae Type C
   }
 
-alcock_multiband:
-  data_dir: 'data/lightcurves/alcock/raw'
-  path_partition: 'data/lightcurves/alcock/ASTROMER_partition/partitions_v1.parquet'
+macho_multiband:
+  data_dir: 'data/lightcurves/macho/raw'
+  path_partition: 'data/lightcurves/macho/ASTROMER_partition/partitions_v1.parquet'
   dict_columns: {
     snid: 'lcid',
     mjd: 'mjd',
@@ -287,16 +287,3 @@ atlas:
     Other: 3,   # Other categories not specified here
     Pulse: 4,   # Pulsating stars (General category)
   }
-
-macho:
-  path_data: 'data/lightcurves/astromer'
-  list_spc: ['all']
-  dict_columns: {
-    snid: 'lcid',
-    mjd: 'mjd',
-    flux: 'flux',
-    flux_err: 'flux_err',
-    label: 'label',
-  }
-  all_bands: false
-  dict_mapping_classes: false

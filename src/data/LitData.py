@@ -125,9 +125,9 @@ class LitData(L.LightningDataModule):
 
     def get_df_partition(self, subset_name, fold):
         condition = (self.partitions['subset'] == subset_name)
-        if subset_name != 'test' or self.name_dataset in ['alcock', 'alcock_multiband']:
+        if subset_name != 'test' or self.name_dataset in ['macho', 'macho_multiband']:
             condition &= (self.partitions['fold'] == fold)
-        if self.spc is not None and self.name_dataset in ['alcock', 'alcock_multiband']:
+        if self.spc is not None and self.name_dataset in ['macho', 'macho_multiband']:
             condition &= (self.partitions['spc'] == str(self.spc))
         return self.partitions[condition]
 

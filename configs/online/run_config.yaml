@@ -18,7 +18,7 @@ ft_classification:
     'use': true,
     'path': "microsoft/swinv2-tiny-patch4-window16-256",
   }
-  list_folds: [0] #, 1, 2, 3, 4]
+  list_folds: [0]
   
   # General Configuration
   debug: false
@@ -27,9 +27,8 @@ ft_classification:
   # Loaders Configuration
   loader:
     name_dataset: 'elasticc_1'
-    #path_data: 'data/lightcurves/elasticc_1'
     spc: null
-    num_workers: 15
+    num_workers: 12
     use_png: false
 
   # Training Configuration
@@ -38,9 +37,9 @@ ft_classification:
     patience: 10
     num_epochs: 10000
     batch_size: 64
-    use_weighted_sampling: false
+    use_weighted_sampling: true
     monitor: 'f1/val'
-    cache_enabled: true
+    cache_enabled: false
 
     classifier: {
       use: true,
