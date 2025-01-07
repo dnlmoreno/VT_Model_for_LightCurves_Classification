@@ -38,6 +38,7 @@ do
       do
         # --- Run the code with current hyperparameters ---
         srun -n 1 --gres=gpu:1 python -m scripts.run_online \
+          ft_classification.results_dir='results_v1' \
           ft_classification.model_name='swinv2' \
           ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
           ft_classification.loader.name_dataset='macho_multiband' \
@@ -49,7 +50,8 @@ do
           ft_classification.imgs_params.fig_params.fmt='-o' \
           ft_classification.training.lr=$lr \
           ft_classification.imgs_params.input_type='2grid' \
-          ft_classification.is_searching_hyperparameters=true
+          ft_classification.is_searching_hyperparameters=true \
+          ft_classification.list_folds="[0, 1, 2]"
           
       done
     done
