@@ -40,8 +40,7 @@ do
         srun -n 1 --gres=gpu:1 python -m scripts.run_online \
           ft_classification.model_name='swinv2' \
           ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
-          ft_classification.loader.name_dataset='macho_multiband' \
-          ft_classification.loader.spc='all' \
+          ft_classification.loader.name_dataset='elasticc_1' \
           ft_classification.training.batch_size=64 \
           ft_classification.imgs_params.fig_params.markersize=$markersize \
           ft_classification.imgs_params.fig_params.linewidth=$linewidth \
@@ -49,7 +48,8 @@ do
           ft_classification.imgs_params.fig_params.fmt='-o' \
           ft_classification.training.lr=$lr \
           ft_classification.imgs_params.input_type='overlay' \
-          ft_classification.is_searching_hyperparameters=true
+          ft_classification.is_searching_hyperparameters=true \
+          ft_classification.list_folds="[0]"
           
       done
     done

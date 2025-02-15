@@ -27,6 +27,8 @@ export HYDRA_CONFIG_NAME="run_config"
 # --- Run the code ---
 srun -n 1 --gres=gpu:1 python -m scripts.run_online \
         ft_classification.model_name='swinv2' \
+        ft_classification.checkpoint.use=true \
+        ft_classification.checkpoint.run_id='36d6c9312bd24f038e616c696d0f9dac' \
         ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
         ft_classification.loader.name_dataset='elasticc_1' \
         ft_classification.training.batch_size=64 \
@@ -34,7 +36,7 @@ srun -n 1 --gres=gpu:1 python -m scripts.run_online \
         ft_classification.imgs_params.input_type='6grid' \
         ft_classification.imgs_params.use_err=false \
         ft_classification.imgs_params.fig_params.markersize=3.0 \
-        ft_classification.imgs_params.fig_params.linewidth=1.0 \
+        ft_classification.imgs_params.fig_params.linewidth=0.5 \
         ft_classification.imgs_params.fig_params.fmt='-o' \
         ft_classification.is_searching_hyperparameters=true \
         ft_classification.training.patience=5

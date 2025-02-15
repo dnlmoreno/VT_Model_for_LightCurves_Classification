@@ -62,14 +62,16 @@ def handle_ckpt_dir(config, fold=None):
     ckpt_dir = '{}/ml-runs/{}'.format(config['checkpoint']['results_dir'], exp_id)
 
     run_name = config['checkpoint']['run_name']
-    if 'ft_classification' in exp_name:
-        run_name = 'Fold_{}_{}'.format(fold, run_name)  
-        run_id = get_run_id_mlflow(exp_id, run_name)
-        ckpt_dir += '/{}'.format(run_id)
+    if config['checkpoint'].get('run_id') is None:
+        if 'ft_classification' in exp_name:
+            run_name = 'Fold_{}_{}'.format(fold, run_name)  
+            run_id = get_run_id_mlflow(exp_id, run_name)
+        else:
+            run_id = get_run_id_mlflow(exp_id, run_name)
     else:
-        run_id = get_run_id_mlflow(exp_id, run_name)
-        ckpt_dir += '/{}'.format(run_id) 
-
+        run_id = config['checkpoint']['run_id']
+    
+    ckpt_dir += '/{}'.format(run_id) 
     ckpt_dir += '/artifacts/model'
     return ckpt_dir
 

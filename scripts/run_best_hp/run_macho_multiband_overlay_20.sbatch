@@ -26,6 +26,7 @@ export HYDRA_CONFIG_NAME="run_config"
 
 # --- Run the code ---
 srun -n 1 --gres=gpu:1 python -m scripts.run_online \
+        ft_classification.results_dir='results_v1' \
         ft_classification.model_name='swinv2' \
         ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
         ft_classification.loader.name_dataset='macho_multiband' \
@@ -34,8 +35,8 @@ srun -n 1 --gres=gpu:1 python -m scripts.run_online \
         ft_classification.training.lr=5.0e-5 \
         ft_classification.imgs_params.input_type='overlay' \
         ft_classification.imgs_params.use_err=true \
-        ft_classification.imgs_params.fig_params.markersize=4.0 \
-        ft_classification.imgs_params.fig_params.linewidth=2.5 \
+        ft_classification.imgs_params.fig_params.markersize=2.0 \
+        ft_classification.imgs_params.fig_params.linewidth=0.5 \
         ft_classification.imgs_params.fig_params.fmt='-o' \
         ft_classification.is_searching_hyperparameters=false \
         ft_classification.training.patience=10 \
