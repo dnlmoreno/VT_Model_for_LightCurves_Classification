@@ -1,4 +1,5 @@
 import os
+import json 
 import hydra
 import mlflow
 import torch
@@ -128,7 +129,7 @@ def perform_ft_classification(run, config, dataset, experiment_name):
         accelerator="gpu",
         min_epochs=1,
         max_epochs=max_epochs,
-        num_sanity_val_steps=0,
+        num_sanity_val_steps=-1,
     )
 
     trainer.fit(model, dataset)

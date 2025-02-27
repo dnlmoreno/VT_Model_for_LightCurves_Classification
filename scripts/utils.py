@@ -5,11 +5,32 @@ import torch
 import yaml
 import mlflow
 import logging
+import zipfile
 import shutil
+import sys
 import os
 
 from sklearn.metrics import f1_score, recall_score, precision_score, accuracy_score
 from sklearn.metrics import confusion_matrix, classification_report
+
+def unzip(zip_path, extract_dir):
+    if not os.path.exists(zip_path):
+        print(f"❌ File not found: {zip_path}")
+        sys.exit(1)
+
+    os.makedirs(extract_dir, exist_ok=True)
+
+    print(f"📂 Extracting: {zip_path}...")
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
+        print(f"✅ Successfully extracted: {zip_path}")
+    except zipfile.BadZipFile:
+        print(f"❌ Error: Invalid ZIP file: {zip_path}")
+        sys.exit(1)
+        
+    os.remove(zip_path)
+    print(f"🗑️ Removed ZIP file: {zip_path}")
 
 def load_yaml(path):
     with open(path, 'r') as file:

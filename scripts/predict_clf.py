@@ -1,5 +1,6 @@
 import glob
 import torch
+import logging
 import pandas as pd
 import numpy as np
 import lightning as L
@@ -8,10 +9,18 @@ from typing import Optional
 from lightning.pytorch import LightningDataModule, LightningModule
 from sklearn.metrics import f1_score
 
+from src.data.LitData import LitData
+from src.models.LitModels.swinv2 import LitModel
 from src.data.ClassOrder import ClassOrder
 from scripts.utils import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+logging.basicConfig(
+    level=logging.INFO, 
+    format="[%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 def predict(dataset: LightningDataModule, 
             loaded_model: LightningModule, 
@@ -53,11 +62,10 @@ def predict(dataset: LightningDataModule,
 if __name__ == "__main__":
 
     config = {
-        'mlflow_dir': 'ml-runs',
-
         'checkpoint': {
-            'exp_name': 'classification/macho/testing',
-            'run_name': '2024-07-13_18-06-43',
+            'exp_name': 'ft_classification/elasticc_1/best_params',
+            'run_name': '2025-02-23_13-56-49',
+            'results_dir': 'results'
         },
 
         'loader': {
@@ -70,15 +78,14 @@ if __name__ == "__main__":
 
     # Data
     hparams = load_yaml(f'{ckpt_dir}/hparams.yaml')
-    dict_info_ds = load_yaml(path='./{}/dict_info.yaml'.format(hparams['loader']['path_data']))
-    dataset = LitDataCLF(dict_info_ds, **hparams)
+    name_dataset = hparams['loader'].pop('name_dataset')
+    dataset = LitData(name_dataset, **hparams)
+    dataset.prepare_data()
     dataset.setup('test')
 
     # Model
-    loaded_model = LitModelCLF.load_from_checkpoint(checkpoint_path=ckpt_model, 
-                                                    map_location=device).eval()
+    loaded_model = LitModel.load_from_checkpoint(checkpoint_path=ckpt_model, 
+                                                 map_location=device).eval()
 
     dict_metrics = predict(dataset, loaded_model)
-
-    print(f"Windows:\n{dict_metrics['Windows']}")
-    print(f"Avg windows:\n{dict_metrics['LCs']}")
+    print(f"LC metrics:\n{dict_metrics}")
