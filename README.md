@@ -3,8 +3,8 @@
 This repository contains the implementation of a Vision Transformer (VT) model called SwinV2, for classifying astronomical light curves. The model is designed to dynamically generate images from astronomical time series data during training, allowing flexibility in modifying hyperparameters without storing images on disk.
 
 <p align="center">
-  <img src="images/input_model.png" alt="Modelo de Entrada" width="45%" style="vertical-align: middle; margin-right: 10px;" />
-  <img src="images/model.png" alt="Modelo General" width="45%" style="vertical-align: middle;" />
+  <img src="images/input_model.png" alt="Modelo de Entrada" width="45%" style="vertical-align: top; margin-right: 10px;" />
+  <img src="images/model.png" alt="Modelo General" width="45%" style="vertical-align: top;" />
 </p>
 
 ## Getting Started
@@ -114,7 +114,7 @@ To monitor training runs using MLflow, start the UI with:
 mlflow ui --backend-store-uri file:./results/ml-runs --host 0.0.0.0 --port 6006
 ```
 
-and you can open in your navigator:
+Then, open the following URL in your browser:
 
 ```bash
 localhost:6006
@@ -131,7 +131,7 @@ If you are using docker you should
 jupyter notebook --ip=0.0.0.0 --port=6006 --allow-root
 ```
 
-and you can open in your navigator:
+Then, open the following URL in your browser:
 
 ```bash
 localhost:6006
@@ -139,7 +139,7 @@ localhost:6006
 
 ## Inference
 
-Inference is performed at the end of the training script `run_online.py`. However, if for any reason you want to use a trained model for inference, you can update the main part of `scripts/predict_clf.py` with the appropriate values for the following variables:
+Inference is performed at the end of the training script `run_online.py`. However, if you need to use a trained model for inference separately, update the main part of `scripts/predict_clf.py` with the appropriate values for the following variables:
 
 * `exp_name`: *<mlflow_experiment_name>*
 * `run_name`: <mlflow_run_name>

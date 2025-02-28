@@ -6,7 +6,6 @@ export HYDRA_CONFIG_NAME="run_config"
 
 # --- Run the code ---
 CUDA_VISIBLE_DEVICES=0 python -m scripts.run_online \
-        ft_classification.results_dir='results_v1' \
         ft_classification.model_name='swinv2' \
         ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
         ft_classification.loader.name_dataset='macho' \
