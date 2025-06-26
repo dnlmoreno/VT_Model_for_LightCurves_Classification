@@ -150,8 +150,15 @@ def perform_ft_classification(run, config, dataset, experiment_name):
 
     model_name = config['model_name']
     LitModel_module = importlib.import_module(f"src.models.LitModels.{model_name}")
-    loaded_model = getattr(LitModel_module, 'LitModel').load_from_checkpoint(checkpoint.best_model_path).eval()  
-    _ = predict(dataset, loaded_model, path_save_metrics)
+    loaded_model = getattr(LitModel_module, 'LitModel').load_from_checkpoint(checkpoint.best_model_path).eval()
+      
+    stages = ['train', 'val', 'test']
+    for stage in stages:
+        dataset.setup(stage=stage)
+        _ = predict(dataset, loaded_model, 
+                    path_save_metrics=path_save_metrics, 
+                    path_save_predictions=EXPDIR,
+                    stage=stage)
     
     # --- Eliminar el archivo de checkpoint ---
     if config['is_searching_hyperparameters']:

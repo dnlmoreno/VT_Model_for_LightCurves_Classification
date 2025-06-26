@@ -24,10 +24,12 @@ logging.basicConfig(
 
 def predict(dataset: LightningDataModule, 
             loaded_model: LightningModule, 
-            path_save_metrics: Optional[str] = None):
+            path_save_metrics: Optional[str] = None,
+            path_save_predictions: Optional[str] = None,
+            stage: Optional[str] = 'test'):
 
     trainer = L.Trainer(logger=None)
-    batches_output = trainer.predict(loaded_model, dataloaders=dataset.predict_dataloader())
+    batches_output = trainer.predict(loaded_model, dataloaders=dataset.predict_dataloader(stage=stage))
 
     # Handling output
     sort_name_classes = list(sort_dict_by_value(dataset.inv_mapping_classes).values())
@@ -37,6 +39,9 @@ def predict(dataset: LightningDataModule,
     # Probabilities by windows
     df_proba['y_pred'] = df_proba['y_pred'].replace(dataset.inv_mapping_classes)
     df_proba['y_true'] = df_proba['y_true'].replace(dataset.inv_mapping_classes)
+
+    if path_save_predictions is not None:
+        df_proba.to_parquet(f'{path_save_predictions}/predictions_{stage}.parquet')
 
     # Metrics
     dict_metrics = dict()
@@ -63,13 +68,13 @@ if __name__ == "__main__":
 
     config = {
         'checkpoint': {
-            'exp_name': 'ft_classification/elasticc_1/best_params',
-            'run_name': '2025-02-23_13-56-49',
+            'exp_name': 'ft_classification/ztf_ff/best_params',
+            'run_name': '2025-05-30_21-02-22',
             'results_dir': 'results'
         },
 
         'loader': {
-            'fold': 2
+            'fold': 0
             }
     }
 
@@ -81,11 +86,17 @@ if __name__ == "__main__":
     name_dataset = hparams['loader'].pop('name_dataset')
     dataset = LitData(name_dataset, **hparams)
     dataset.prepare_data()
-    dataset.setup('test')
+    stages = ['train', 'val', 'test']
 
-    # Model
-    loaded_model = LitModel.load_from_checkpoint(checkpoint_path=ckpt_model, 
-                                                 map_location=device).eval()
+    for stage in stages:
+        dataset.setup(stage=stage)
 
-    dict_metrics = predict(dataset, loaded_model)
-    print(f"LC metrics:\n{dict_metrics}")
+        # Model
+        loaded_model = LitModel.load_from_checkpoint(checkpoint_path=ckpt_model, 
+                                                     map_location=device).eval()
+
+        EXPDIR = "/".join(ckpt_dir.split('/')[0:-1])
+        dict_metrics = predict(dataset, loaded_model,
+                               path_save_predictions=EXPDIR, 
+                               stage=stage)
+        print(f"LC metrics:\n{dict_metrics}")

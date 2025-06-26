@@ -143,6 +143,7 @@ elasticc_1:
 macho:
   data_dir: 'data/lightcurves/macho/raw'
   path_partition: 'data/lightcurves/macho/ASTROMER_partition/partitions_v1.parquet'
+  #path_partition: 'data/lightcurves/macho/bright_biased_partition/partitions_v1.parquet'
   dict_columns: {
     snid: 'lcid',
     mjd: 'mjd',
@@ -166,6 +167,7 @@ macho:
 macho_multiband:
   data_dir: 'data/lightcurves/macho/raw'
   path_partition: 'data/lightcurves/macho/ASTROMER_partition/partitions_v1.parquet'
+  #path_partition: 'data/lightcurves/macho/bright_biased_partition/partitions_v1.parquet'
   dict_columns: {
     snid: 'lcid',
     mjd: 'mjd',

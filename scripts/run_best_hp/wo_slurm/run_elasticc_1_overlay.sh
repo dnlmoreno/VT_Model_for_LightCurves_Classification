@@ -9,6 +9,7 @@ CUDA_VISIBLE_DEVICES=0 python -m scripts.run_online \
         ft_classification.model_name='swinv2' \
         ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
         ft_classification.loader.name_dataset='elasticc_1' \
+        ft_classification.loader.spc=null \
         ft_classification.training.batch_size=64 \
         ft_classification.training.lr=5.0e-6 \
         ft_classification.imgs_params.input_type='overlay' \

@@ -50,7 +50,7 @@ class LitData(L.LightningDataModule):
             logging.info('✅ Dataset is already loaded.')
 
     def setup(self, stage=None):
-        if stage == 'fit' or stage is None:
+        if stage in ["fit", "train"] or stage is None:
             logging.info('⚙️ Setting up the training dataset.')
             train_partition = self.get_df_partition('train', self.fold)
             self.train_dataset = CustomDataset(
@@ -62,6 +62,7 @@ class LitData(L.LightningDataModule):
             )
             logging.info('✅ Training dataset setup completed.')
 
+        if stage in ["fit", "validation", "val"] or stage is None:
             logging.info('⚙️ Setting up the validation dataset.')
             val_partition = self.get_df_partition('val', self.fold)
             self.val_dataset = CustomDataset(
@@ -73,12 +74,12 @@ class LitData(L.LightningDataModule):
             )
             logging.info('✅ Validation dataset setup completed.')
 
-            snid_name = self.dict_cols['snid']
-            lcids_used = np.hstack([
-                train_partition[snid_name].values,
-                val_partition[snid_name].values,
-            ])
-            self.release_memory(lcids_used, snid_name)
+            #snid_name = self.dict_cols['snid']
+            #lcids_used = np.hstack([
+            #    train_partition[snid_name].values,
+            #    val_partition[snid_name].values,
+            #])
+            #self.release_memory(lcids_used, snid_name)
 
         if (stage == 'test' or stage is None) and not self.test_prepared:
             logging.info('⚙️ Setting up the test dataset.')
@@ -118,10 +119,19 @@ class LitData(L.LightningDataModule):
                           batch_size=self.batch_size,
                           num_workers=self.num_workers)
 
-    def predict_dataloader(self):
-        return DataLoader(self.test_dataset, 
-                          batch_size=self.batch_size,
-                          num_workers=self.num_workers) 
+    def predict_dataloader(self, stage='test'):
+        if stage == 'train':
+            return DataLoader(self.train_dataset, 
+                              batch_size=self.batch_size,
+                              num_workers=self.num_workers) 
+        elif stage == 'val':
+            return DataLoader(self.val_dataset, 
+                              batch_size=self.batch_size,
+                              num_workers=self.num_workers) 
+        else:
+            return DataLoader(self.test_dataset, 
+                              batch_size=self.batch_size,
+                              num_workers=self.num_workers) 
 
     def get_df_partition(self, subset_name, fold):
         condition = (self.partitions['subset'] == subset_name)

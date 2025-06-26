@@ -41,6 +41,7 @@ do
           ft_classification.model_name='swinv2' \
           ft_classification.pretrained_model.path="microsoft/swinv2-tiny-patch4-window16-256" \
           ft_classification.loader.name_dataset='elasticc_1' \
+          ft_classification.loader.spc=null \
           ft_classification.training.batch_size=64 \
           ft_classification.imgs_params.fig_params.markersize=$markersize \
           ft_classification.imgs_params.fig_params.linewidth=$linewidth \
